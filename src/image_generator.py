@@ -324,8 +324,136 @@ def save_png_with_metadata(img, filename):
     print(f"  Metadata chunks: {len(pnginfo.chunks)}")
 
 
+def create_gif_test_animation(width=200, height=200, frame_count=10):
+    """
+    Generate an ideal GIF test animation with diverse elements and movement.
+    
+    Args:
+        width (int): Image width in pixels
+        height (int): Image height in pixels
+        frame_count (int): Number of animation frames
+    
+    Returns:
+        list: List of PIL.Image frames for GIF animation
+    """
+    frames = []
+    
+    for frame_idx in range(frame_count):
+        # Create base frame
+        img = Image.new('RGBA', (width, height), (50, 50, 50, 255))  # Dark gray background
+        draw = ImageDraw.Draw(img)
+        
+        # Animation progress (0.0 to 1.0)
+        progress = frame_idx / (frame_count - 1) if frame_count > 1 else 0
+        
+        # 1. Moving ball (bouncing)
+        ball_x = int(30 + (width - 60) * abs(2 * progress - 1))  # Bounce effect
+        ball_y = int(height // 2 + 30 * np.sin(progress * 4 * np.pi))
+        draw.ellipse([ball_x - 10, ball_y - 10, ball_x + 10, ball_y + 10], 
+                    fill=(255, 100, 100, 255))  # Red ball
+        
+        # 2. Rotating spinner
+        center_x, center_y = width // 2, height // 2
+        angle = progress * 360 * 2  # 2 full rotations
+        spinner_length = 25
+        end_x = center_x + spinner_length * np.cos(np.radians(angle))
+        end_y = center_y + spinner_length * np.sin(np.radians(angle))
+        draw.line([center_x, center_y, end_x, end_y], fill=(100, 255, 100, 255), width=3)
+        
+        # 3. Color changing background elements
+        hue = (progress * 360) % 360
+        rgb = hsv_to_rgb(hue, 0.8, 0.9)
+        
+        # Corner squares with changing colors
+        for corner_idx, (x, y) in enumerate([(10, 10), (width-30, 10), (10, height-30), (width-30, height-30)]):
+            corner_hue = (hue + corner_idx * 90) % 360
+            corner_rgb = hsv_to_rgb(corner_hue, 0.6, 0.8)
+            draw.rectangle([x, y, x + 20, y + 20], fill=(*corner_rgb, 255))
+        
+        # 4. Pulsing text
+        text_alpha = int(128 + 127 * np.sin(progress * 4 * np.pi))
+        try:
+            font = ImageFont.load_default()
+        except:
+            font = None
+        
+        draw.text((width//2 - 15, height - 25), "GIF", 
+                 fill=(255, 255, 255, text_alpha), font=font)
+        
+        # 5. Progress bar
+        bar_width = int((width - 20) * progress)
+        draw.rectangle([10, height - 10, 10 + bar_width, height - 5], 
+                      fill=(255, 255, 0, 255))
+        
+        frames.append(img)
+    
+    return frames
+
+
+def save_gif_with_options(frames, filename, duration=100, loop=0, optimize=False, 
+                         palette_size=256, dither=True):
+    """
+    Save GIF animation with specified options.
+    
+    Args:
+        frames (list): List of PIL.Image frames
+        filename (str): Output filename
+        duration (int): Frame duration in milliseconds
+        loop (int): Loop count (0 = infinite)
+        optimize (bool): Enable GIF optimization
+        palette_size (int): Maximum colors in palette (2-256)
+        dither (bool): Enable dithering
+    """
+    if not frames:
+        raise ValueError("No frames provided")
+    
+    # Ensure all frames are in RGBA mode
+    rgba_frames = []
+    for frame in frames:
+        if frame.mode != 'RGBA':
+            frame = frame.convert('RGBA')
+        rgba_frames.append(frame)
+    
+    # Convert to palette mode if specified
+    if palette_size < 256:
+        # Create quantized frames
+        quantized_frames = []
+        for frame in rgba_frames:
+            # Convert RGBA to RGB for quantization
+            if frame.mode == 'RGBA':
+                # Create white background for transparency
+                background = Image.new('RGB', frame.size, (255, 255, 255))
+                background.paste(frame, mask=frame.split()[-1])  # Use alpha as mask
+                frame = background
+            
+            # Quantize to specified palette size
+            quantized = frame.quantize(colors=palette_size, dither=Image.FLOYDSTEINBERG if dither else Image.NONE)
+            quantized_frames.append(quantized)
+        
+        save_frames = quantized_frames
+    else:
+        save_frames = rgba_frames
+    
+    # Save GIF
+    save_frames[0].save(
+        filename,
+        format='GIF',
+        save_all=True,
+        append_images=save_frames[1:],
+        duration=duration,
+        loop=loop,
+        optimize=optimize
+    )
+    
+    print(f"GIF animation saved: {filename}")
+    print(f"  Frames: {len(save_frames)}")
+    print(f"  Duration: {duration}ms per frame")
+    print(f"  Palette size: {palette_size} colors")
+    print(f"  File size: {Path(filename).stat().st_size} bytes")
+
+
 def generate_original_images(output_dir="output"):
-    """Generate both JPEG and PNG test images with ideal specifications."""
+    """Generate JPEG, PNG, and GIF test images with ideal specifications."""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
@@ -344,10 +472,18 @@ def generate_original_images(output_dir="output"):
         png_path = output_path / "test_original.png"
         save_png_with_metadata(png_img, str(png_path))
         
+        # Generate GIF test animation
+        print("\n3. Creating GIF test animation...")
+        gif_frames = create_gif_test_animation(width=200, height=200, frame_count=10)
+        gif_path = output_path / "test_original.gif"
+        save_gif_with_options(gif_frames, str(gif_path), duration=100, loop=0, 
+                             optimize=False, palette_size=256, dither=True)
+        
         print("\nGeneration complete!")
         print("\nGenerated files:")
         print(f"  {jpeg_path} - JPEG with rich EXIF data, diverse content")
         print(f"  {png_path} - PNG with transparency, metadata chunks")
+        print(f"  {gif_path} - GIF with animation, diverse elements")
         
         return True
         

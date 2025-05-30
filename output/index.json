@@ -12,6 +12,12 @@
     "en": "Original PNG image (RGBA, transparency, metadata chunks)"
   },
   {
+    "format": "gif",
+    "path": "test_original.gif",
+    "jp": "GIF元画像（アニメーション、多様な動的要素）",
+    "en": "Original GIF image (animation, diverse dynamic elements)"
+  },
+  {
     "format": "jpeg",
     "path": "jpeg/colorspace_rgb.jpg",
     "jp": "RGB色空間での保存",
@@ -346,5 +352,125 @@
     "path": "png/critical_interlace_highres.png",
     "jp": "インターレースと高解像度の組み合わせ",
     "en": "Interlace with high resolution combination"
+  },
+  {
+    "format": "gif",
+    "path": "gif/frames_single.gif",
+    "jp": "静止画GIF（1フレーム）",
+    "en": "Static GIF (1 frame)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/frames_short.gif",
+    "jp": "短いアニメーション（5フレーム）",
+    "en": "Short animation (5 frames)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/frames_medium.gif",
+    "jp": "中程度アニメーション（10フレーム）",
+    "en": "Medium animation (10 frames)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/frames_long.gif",
+    "jp": "長いアニメーション（20フレーム）",
+    "en": "Long animation (20 frames)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/fps_slow.gif",
+    "jp": "低フレームレート（5 FPS）",
+    "en": "Low frame rate (5 FPS)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/fps_normal.gif",
+    "jp": "標準フレームレート（10 FPS）",
+    "en": "Normal frame rate (10 FPS)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/fps_fast.gif",
+    "jp": "高フレームレート（25 FPS）",
+    "en": "High frame rate (25 FPS)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/palette_2colors.gif",
+    "jp": "2色パレット（最小）",
+    "en": "2-color palette (minimum)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/palette_16colors.gif",
+    "jp": "16色パレット",
+    "en": "16-color palette"
+  },
+  {
+    "format": "gif",
+    "path": "gif/palette_256colors.gif",
+    "jp": "256色パレット（最大）",
+    "en": "256-color palette (maximum)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/dither_nodither.gif",
+    "jp": "ディザリングなし",
+    "en": "No dithering"
+  },
+  {
+    "format": "gif",
+    "path": "gif/dither_dithered.gif",
+    "jp": "Floyd-Steinbergディザリング",
+    "en": "Floyd-Steinberg dithering"
+  },
+  {
+    "format": "gif",
+    "path": "gif/optimize_noopt.gif",
+    "jp": "最適化なし",
+    "en": "No optimization"
+  },
+  {
+    "format": "gif",
+    "path": "gif/optimize_optimized.gif",
+    "jp": "基本最適化（フレーム最適化）",
+    "en": "Basic optimization (frame optimization)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/loop_loop_infinite.gif",
+    "jp": "無限ループ",
+    "en": "Infinite loop"
+  },
+  {
+    "format": "gif",
+    "path": "gif/loop_loop_once.gif",
+    "jp": "1回再生のみ",
+    "en": "Play once only"
+  },
+  {
+    "format": "gif",
+    "path": "gif/loop_loop_3times.gif",
+    "jp": "3回ループ",
+    "en": "Loop 3 times"
+  },
+  {
+    "format": "gif",
+    "path": "gif/critical_fast_256colors_long.gif",
+    "jp": "高フレームレート+大パレット+長時間（大ファイル）",
+    "en": "High frame rate + large palette + long duration (large file)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/critical_dither_smallpalette.gif",
+    "jp": "ディザリング+小パレット（品質劣化）",
+    "en": "Dithering + small palette (quality degradation)"
+  },
+  {
+    "format": "gif",
+    "path": "gif/critical_noopt_manyframes.gif",
+    "jp": "最適化なし+多フレーム（非効率）",
+    "en": "No optimization + many frames (inefficient)"
   }
 ]
