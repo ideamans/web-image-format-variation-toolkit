@@ -7,6 +7,7 @@ the specifications defined in CLAUDE.md.
 
 import os
 import subprocess
+import json
 from pathlib import Path
 from PIL import Image
 import tempfile
@@ -47,118 +48,258 @@ def generate_variations(source_dir="output", output_dir="output"):
         return False
     
     print("Generating JPEG variations...")
-    success_jpeg = generate_jpeg_variations(str(jpeg_source), str(jpeg_output))
+    jpeg_index = generate_jpeg_variations(str(jpeg_source), str(jpeg_output))
     
     print("\nGenerating PNG variations...")
-    success_png = generate_png_variations(str(png_source), str(png_output))
+    png_index = generate_png_variations(str(png_source), str(png_output))
     
-    return success_jpeg and success_png
+    # Generate index.json
+    if jpeg_index is not None and png_index is not None:
+        all_variations = []
+        
+        # Add original images
+        all_variations.append({
+            "format": "jpeg",
+            "path": "test_original.jpg",
+            "jp": "JPEG元画像（高品質、豊富なメタデータ、多様なコンテンツ）",
+            "en": "Original JPEG image (high quality, rich metadata, diverse content)"
+        })
+        
+        all_variations.append({
+            "format": "png",
+            "path": "test_original.png",
+            "jp": "PNG元画像（RGBA、透明度、メタデータチャンク）",
+            "en": "Original PNG image (RGBA, transparency, metadata chunks)"
+        })
+        
+        # Add variations
+        all_variations.extend(jpeg_index)
+        all_variations.extend(png_index)
+        
+        index_file = output_path / "index.json"
+        
+        with open(index_file, 'w', encoding='utf-8') as f:
+            json.dump(all_variations, f, indent=2, ensure_ascii=False)
+        
+        print(f"\nGenerated index file: {index_file}")
+        print(f"Total variations indexed: {len(all_variations)} (including 2 originals)")
+        
+        return True
+    else:
+        return False
 
 
 def generate_jpeg_variations(source_file, output_dir):
     """Generate JPEG format variations."""
     try:
-        # Single-choice factors
+        variations_index = []
         
-        # Color space variations
-        _convert_jpeg_colorspace(source_file, output_dir, "rgb")
-        _convert_jpeg_colorspace(source_file, output_dir, "cmyk")
-        _convert_jpeg_colorspace(source_file, output_dir, "grayscale")
+        # Define JPEG variation specifications with descriptions
+        jpeg_specs = [
+            # Color space variations
+            ("rgb", "colorspace", "RGB色空間での保存", "Saved in RGB color space"),
+            ("cmyk", "colorspace", "CMYK色空間での保存（印刷用）", "Saved in CMYK color space (for printing)"),
+            ("grayscale", "colorspace", "グレースケール（白黒）での保存", "Saved in grayscale (black and white)"),
+            
+            # Encoding format variations
+            ("baseline", "encoding", "ベースラインJPEG（標準形式）", "Baseline JPEG (standard format)"),
+            ("progressive", "encoding", "プログレッシブJPEG（段階的表示対応）", "Progressive JPEG (supports gradual display)"),
+            
+            # Thumbnail variations
+            ("none", "thumbnail", "サムネイル画像なし", "No embedded thumbnail"),
+            ("embedded", "thumbnail", "サムネイル画像埋め込み", "Embedded thumbnail image"),
+            
+            # Quality variations
+            (20, "quality", "低品質（高圧縮、ファイルサイズ小）", "Low quality (high compression, small file size)"),
+            (50, "quality", "中品質（バランス型）", "Medium quality (balanced)"),
+            (80, "quality", "高品質（低圧縮）", "High quality (low compression)"),
+            (95, "quality", "最高品質（ほぼ無劣化）", "Highest quality (nearly lossless)"),
+            
+            # Subsampling variations  
+            ("444", "subsampling", "4:4:4サブサンプリング（最高品質）", "4:4:4 subsampling (highest quality)"),
+            ("422", "subsampling", "4:2:2サブサンプリング（中品質）", "4:2:2 subsampling (medium quality)"),
+            ("420", "subsampling", "4:2:0サブサンプリング（高圧縮）", "4:2:0 subsampling (high compression)"),
+            
+            # Metadata variations
+            ("none", "metadata", "メタデータなし（軽量化）", "No metadata (lightweight)"),
+            ("basic_exif", "metadata", "基本的なEXIF情報のみ", "Basic EXIF information only"),
+            ("gps", "metadata", "GPS位置情報付きEXIF", "EXIF with GPS location data"),
+            ("full_exif", "metadata", "完全なEXIF情報（撮影情報等）", "Complete EXIF information (shooting data, etc.)"),
+            
+            # ICC profile variations
+            ("none", "icc", "カラープロファイルなし", "No color profile"),
+            ("srgb", "icc", "sRGBカラープロファイル（Web標準）", "sRGB color profile (web standard)"),
+            ("adobergb", "icc", "Adobe RGBカラープロファイル（広色域）", "Adobe RGB color profile (wide gamut)"),
+        ]
         
-        # Encoding format variations
-        _convert_jpeg_encoding(source_file, output_dir, "baseline")
-        _convert_jpeg_encoding(source_file, output_dir, "progressive")
-        
-        # Thumbnail variations
-        _convert_jpeg_thumbnail(source_file, output_dir, "none")
-        _convert_jpeg_thumbnail(source_file, output_dir, "embedded")
-        
-        # Quality variations
-        for quality in [20, 50, 80, 95]:
-            _convert_jpeg_quality(source_file, output_dir, quality)
-        
-        # Subsampling variations
-        _convert_jpeg_subsampling(source_file, output_dir, "444")
-        _convert_jpeg_subsampling(source_file, output_dir, "422")
-        _convert_jpeg_subsampling(source_file, output_dir, "420")
-        
-        # Metadata variations
-        _convert_jpeg_metadata(source_file, output_dir, "none")
-        _convert_jpeg_metadata(source_file, output_dir, "basic_exif")
-        _convert_jpeg_metadata(source_file, output_dir, "gps")
-        _convert_jpeg_metadata(source_file, output_dir, "full_exif")
-        
-        # ICC profile variations
-        _convert_jpeg_icc(source_file, output_dir, "none")
-        _convert_jpeg_icc(source_file, output_dir, "srgb")
-        _convert_jpeg_icc(source_file, output_dir, "adobergb")
+        # Generate variations
+        for param, category, jp_desc, en_desc in jpeg_specs:
+            if category == "colorspace":
+                _convert_jpeg_colorspace(source_file, output_dir, param)
+                filename = f"colorspace_{param}.jpg"
+            elif category == "encoding":
+                _convert_jpeg_encoding(source_file, output_dir, param)
+                filename = f"encoding_{param}.jpg"
+            elif category == "thumbnail":
+                _convert_jpeg_thumbnail(source_file, output_dir, param)
+                filename = f"thumbnail_{param}.jpg"
+            elif category == "quality":
+                _convert_jpeg_quality(source_file, output_dir, param)
+                filename = f"quality_{param}.jpg"
+            elif category == "subsampling":
+                _convert_jpeg_subsampling(source_file, output_dir, param)
+                filename = f"subsampling_{param}.jpg"
+            elif category == "metadata":
+                _convert_jpeg_metadata(source_file, output_dir, param)
+                filename = f"metadata_{param}.jpg"
+            elif category == "icc":
+                _convert_jpeg_icc(source_file, output_dir, param)
+                filename = f"icc_{param}.jpg"
+            
+            # Add to index
+            variations_index.append({
+                "format": "jpeg",
+                "path": f"jpeg/{filename}",
+                "jp": jp_desc,
+                "en": en_desc
+            })
         
         # Critical combinations
+        critical_combinations = [
+            ("critical_cmyk_lowquality.jpg", "CMYK色空間と低品質の組み合わせ（高圧縮）", "CMYK color space with low quality (high compression)"),
+            ("critical_progressive_fullmeta.jpg", "プログレッシブ形式と完全メタデータの組み合わせ", "Progressive format with complete metadata"),
+            ("critical_thumbnail_progressive.jpg", "サムネイル埋め込みとプログレッシブの組み合わせ", "Embedded thumbnail with progressive format")
+        ]
+        
         _convert_jpeg_critical_combinations(source_file, output_dir)
         
+        for filename, jp_desc, en_desc in critical_combinations:
+            variations_index.append({
+                "format": "jpeg",
+                "path": f"jpeg/{filename}",
+                "jp": jp_desc,
+                "en": en_desc
+            })
+        
         print("JPEG variations generated successfully")
-        return True
+        return variations_index
         
     except Exception as e:
         print(f"Error generating JPEG variations: {e}")
-        return False
+        return None
 
 
 def generate_png_variations(source_file, output_dir):
     """Generate PNG format variations."""
     try:
-        # Color type variations
-        _convert_png_colortype(source_file, output_dir, "grayscale")
-        _convert_png_colortype(source_file, output_dir, "palette")
-        _convert_png_colortype(source_file, output_dir, "rgb")
-        _convert_png_colortype(source_file, output_dir, "rgba")
-        _convert_png_colortype(source_file, output_dir, "grayscale_alpha")
+        variations_index = []
         
-        # Interlacing variations
-        _convert_png_interlace(source_file, output_dir, "none")
-        _convert_png_interlace(source_file, output_dir, "adam7")
+        # Define PNG variation specifications with descriptions
+        png_specs = [
+            # Color type variations
+            ("grayscale", "colortype", "グレースケール（白黒画像）", "Grayscale (black and white image)"),
+            ("palette", "colortype", "パレットカラー（256色まで）", "Palette color (up to 256 colors)"),
+            ("rgb", "colortype", "RGB（透明度なし）", "RGB (no transparency)"),
+            ("rgba", "colortype", "RGBA（透明度あり）", "RGBA (with transparency)"),
+            ("grayscale_alpha", "colortype", "グレースケール+透明度", "Grayscale with transparency"),
+            
+            # Interlacing variations
+            ("none", "interlace", "インターレースなし（通常）", "No interlace (standard)"),
+            ("adam7", "interlace", "Adam7インターレース（段階的表示）", "Adam7 interlace (progressive display)"),
+            
+            # Color depth variations
+            (1, "depth", "1ビット深度（白黒のみ）", "1-bit depth (black and white only)"),
+            (8, "depth", "8ビット深度（標準）", "8-bit depth (standard)"),
+            (16, "depth", "16ビット深度（高精度）", "16-bit depth (high precision)"),
+            
+            # Compression level variations
+            (0, "compression", "圧縮なし（最大ファイルサイズ）", "No compression (maximum file size)"),
+            (6, "compression", "標準圧縮（デフォルト）", "Standard compression (default)"),
+            (9, "compression", "最大圧縮（最小ファイルサイズ）", "Maximum compression (minimum file size)"),
+            
+            # Transparency variations
+            ("opaque", "alpha", "完全不透明", "Completely opaque"),
+            ("semitransparent", "alpha", "半透明（部分的透明度）", "Semi-transparent (partial transparency)"),
+            ("transparent", "alpha", "透明領域あり", "Has transparent areas"),
+            
+            # Filter type variations
+            ("none", "filter", "フィルターなし", "No filter"),
+            ("sub", "filter", "Subフィルター（水平予測）", "Sub filter (horizontal prediction)"),
+            ("up", "filter", "Upフィルター（垂直予測）", "Up filter (vertical prediction)"),
+            ("average", "filter", "Averageフィルター（平均予測）", "Average filter (average prediction)"),
+            ("paeth", "filter", "Paethフィルター（複合予測）", "Paeth filter (complex prediction)"),
+            
+            # Metadata variations
+            ("none", "metadata", "メタデータなし", "No metadata"),
+            ("text", "metadata", "テキストメタデータ", "Text metadata"),
+            ("compressed", "metadata", "圧縮テキストメタデータ", "Compressed text metadata"),
+            ("international", "metadata", "国際化テキスト（UTF-8）", "International text (UTF-8)"),
+            
+            # Auxiliary chunk variations
+            ("gamma", "chunk", "ガンマ補正情報", "Gamma correction information"),
+            ("background", "chunk", "背景色指定", "Background color specification"),
+            ("transparency", "chunk", "透明色指定", "Transparent color specification"),
+        ]
         
-        # Color depth variations
-        _convert_png_depth(source_file, output_dir, 1)
-        _convert_png_depth(source_file, output_dir, 8)
-        _convert_png_depth(source_file, output_dir, 16)
-        
-        # Compression level variations
-        for level in [0, 6, 9]:
-            _convert_png_compression(source_file, output_dir, level)
-        
-        # Transparency variations
-        _convert_png_alpha(source_file, output_dir, "opaque")
-        _convert_png_alpha(source_file, output_dir, "semitransparent")
-        _convert_png_alpha(source_file, output_dir, "transparent")
-        
-        # Filter type variations
-        _convert_png_filter(source_file, output_dir, "none")
-        _convert_png_filter(source_file, output_dir, "sub")
-        _convert_png_filter(source_file, output_dir, "up")
-        _convert_png_filter(source_file, output_dir, "average")
-        _convert_png_filter(source_file, output_dir, "paeth")
-        
-        # Metadata variations
-        _convert_png_metadata(source_file, output_dir, "none")
-        _convert_png_metadata(source_file, output_dir, "text")
-        _convert_png_metadata(source_file, output_dir, "compressed")
-        _convert_png_metadata(source_file, output_dir, "international")
-        
-        # Auxiliary chunk variations
-        _convert_png_chunks(source_file, output_dir, "gamma")
-        _convert_png_chunks(source_file, output_dir, "background")
-        _convert_png_chunks(source_file, output_dir, "transparency")
+        # Generate variations
+        for param, category, jp_desc, en_desc in png_specs:
+            if category == "colortype":
+                _convert_png_colortype(source_file, output_dir, param)
+                filename = f"colortype_{param}.png"
+            elif category == "interlace":
+                _convert_png_interlace(source_file, output_dir, param)
+                filename = f"interlace_{param}.png"
+            elif category == "depth":
+                _convert_png_depth(source_file, output_dir, param)
+                filename = f"depth_{param}bit.png"
+            elif category == "compression":
+                _convert_png_compression(source_file, output_dir, param)
+                filename = f"compression_{param}.png"
+            elif category == "alpha":
+                _convert_png_alpha(source_file, output_dir, param)
+                filename = f"alpha_{param}.png"
+            elif category == "filter":
+                _convert_png_filter(source_file, output_dir, param)
+                filename = f"filter_{param}.png"
+            elif category == "metadata":
+                _convert_png_metadata(source_file, output_dir, param)
+                filename = f"metadata_{param}.png"
+            elif category == "chunk":
+                _convert_png_chunks(source_file, output_dir, param)
+                filename = f"chunk_{param}.png"
+            
+            # Add to index
+            variations_index.append({
+                "format": "png",
+                "path": f"png/{filename}",
+                "jp": jp_desc,
+                "en": en_desc
+            })
         
         # Critical combinations
+        critical_combinations = [
+            ("critical_16bit_palette.png", "16ビットからパレットへの変換（大幅な色情報損失）", "16-bit to palette conversion (significant color information loss)"),
+            ("critical_alpha_grayscale.png", "RGBAからグレースケール+透明度への変換", "RGBA to grayscale with alpha conversion"),
+            ("critical_maxcompression_paeth.png", "最大圧縮とPaethフィルターの組み合わせ", "Maximum compression with Paeth filter combination"),
+            ("critical_interlace_highres.png", "インターレースと高解像度の組み合わせ", "Interlace with high resolution combination")
+        ]
+        
         _convert_png_critical_combinations(source_file, output_dir)
         
+        for filename, jp_desc, en_desc in critical_combinations:
+            variations_index.append({
+                "format": "png",
+                "path": f"png/{filename}",
+                "jp": jp_desc,
+                "en": en_desc
+            })
+        
         print("PNG variations generated successfully")
-        return True
+        return variations_index
         
     except Exception as e:
         print(f"Error generating PNG variations: {e}")
-        return False
+        return None
 
 
 # JPEG conversion functions
@@ -315,6 +456,7 @@ def _convert_png_depth(source, output_dir, depth):
     if depth == 1:
         # Convert to 1-bit by first making it grayscale, then monochrome
         cmd = ["convert", source, "-colorspace", "Gray", "-monochrome", output_file]
+        _run_imagemagick_command(cmd)
     elif depth == 16:
         # Create true 16-bit PNG using Python/OpenCV for guaranteed 16-bit output
         try:
@@ -327,8 +469,7 @@ def _convert_png_depth(source, output_dir, depth):
             _run_imagemagick_command(cmd)
     else:
         cmd = ["convert", source, "-depth", str(depth), output_file]
-    
-    _run_imagemagick_command(cmd)
+        _run_imagemagick_command(cmd)
 
 
 def _convert_png_compression(source, output_dir, level):

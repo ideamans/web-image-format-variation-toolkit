@@ -1,0 +1,350 @@
+[
+  {
+    "format": "jpeg",
+    "path": "test_original.jpg",
+    "jp": "JPEG元画像（高品質、豊富なメタデータ、多様なコンテンツ）",
+    "en": "Original JPEG image (high quality, rich metadata, diverse content)"
+  },
+  {
+    "format": "png",
+    "path": "test_original.png",
+    "jp": "PNG元画像（RGBA、透明度、メタデータチャンク）",
+    "en": "Original PNG image (RGBA, transparency, metadata chunks)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/colorspace_rgb.jpg",
+    "jp": "RGB色空間での保存",
+    "en": "Saved in RGB color space"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/colorspace_cmyk.jpg",
+    "jp": "CMYK色空間での保存（印刷用）",
+    "en": "Saved in CMYK color space (for printing)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/colorspace_grayscale.jpg",
+    "jp": "グレースケール（白黒）での保存",
+    "en": "Saved in grayscale (black and white)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/encoding_baseline.jpg",
+    "jp": "ベースラインJPEG（標準形式）",
+    "en": "Baseline JPEG (standard format)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/encoding_progressive.jpg",
+    "jp": "プログレッシブJPEG（段階的表示対応）",
+    "en": "Progressive JPEG (supports gradual display)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/thumbnail_none.jpg",
+    "jp": "サムネイル画像なし",
+    "en": "No embedded thumbnail"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/thumbnail_embedded.jpg",
+    "jp": "サムネイル画像埋め込み",
+    "en": "Embedded thumbnail image"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/quality_20.jpg",
+    "jp": "低品質（高圧縮、ファイルサイズ小）",
+    "en": "Low quality (high compression, small file size)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/quality_50.jpg",
+    "jp": "中品質（バランス型）",
+    "en": "Medium quality (balanced)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/quality_80.jpg",
+    "jp": "高品質（低圧縮）",
+    "en": "High quality (low compression)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/quality_95.jpg",
+    "jp": "最高品質（ほぼ無劣化）",
+    "en": "Highest quality (nearly lossless)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/subsampling_444.jpg",
+    "jp": "4:4:4サブサンプリング（最高品質）",
+    "en": "4:4:4 subsampling (highest quality)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/subsampling_422.jpg",
+    "jp": "4:2:2サブサンプリング（中品質）",
+    "en": "4:2:2 subsampling (medium quality)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/subsampling_420.jpg",
+    "jp": "4:2:0サブサンプリング（高圧縮）",
+    "en": "4:2:0 subsampling (high compression)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/metadata_none.jpg",
+    "jp": "メタデータなし（軽量化）",
+    "en": "No metadata (lightweight)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/metadata_basic_exif.jpg",
+    "jp": "基本的なEXIF情報のみ",
+    "en": "Basic EXIF information only"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/metadata_gps.jpg",
+    "jp": "GPS位置情報付きEXIF",
+    "en": "EXIF with GPS location data"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/metadata_full_exif.jpg",
+    "jp": "完全なEXIF情報（撮影情報等）",
+    "en": "Complete EXIF information (shooting data, etc.)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/icc_none.jpg",
+    "jp": "カラープロファイルなし",
+    "en": "No color profile"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/icc_srgb.jpg",
+    "jp": "sRGBカラープロファイル（Web標準）",
+    "en": "sRGB color profile (web standard)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/icc_adobergb.jpg",
+    "jp": "Adobe RGBカラープロファイル（広色域）",
+    "en": "Adobe RGB color profile (wide gamut)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_cmyk_lowquality.jpg",
+    "jp": "CMYK色空間と低品質の組み合わせ（高圧縮）",
+    "en": "CMYK color space with low quality (high compression)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_progressive_fullmeta.jpg",
+    "jp": "プログレッシブ形式と完全メタデータの組み合わせ",
+    "en": "Progressive format with complete metadata"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_thumbnail_progressive.jpg",
+    "jp": "サムネイル埋め込みとプログレッシブの組み合わせ",
+    "en": "Embedded thumbnail with progressive format"
+  },
+  {
+    "format": "png",
+    "path": "png/colortype_grayscale.png",
+    "jp": "グレースケール（白黒画像）",
+    "en": "Grayscale (black and white image)"
+  },
+  {
+    "format": "png",
+    "path": "png/colortype_palette.png",
+    "jp": "パレットカラー（256色まで）",
+    "en": "Palette color (up to 256 colors)"
+  },
+  {
+    "format": "png",
+    "path": "png/colortype_rgb.png",
+    "jp": "RGB（透明度なし）",
+    "en": "RGB (no transparency)"
+  },
+  {
+    "format": "png",
+    "path": "png/colortype_rgba.png",
+    "jp": "RGBA（透明度あり）",
+    "en": "RGBA (with transparency)"
+  },
+  {
+    "format": "png",
+    "path": "png/colortype_grayscale_alpha.png",
+    "jp": "グレースケール+透明度",
+    "en": "Grayscale with transparency"
+  },
+  {
+    "format": "png",
+    "path": "png/interlace_none.png",
+    "jp": "インターレースなし（通常）",
+    "en": "No interlace (standard)"
+  },
+  {
+    "format": "png",
+    "path": "png/interlace_adam7.png",
+    "jp": "Adam7インターレース（段階的表示）",
+    "en": "Adam7 interlace (progressive display)"
+  },
+  {
+    "format": "png",
+    "path": "png/depth_1bit.png",
+    "jp": "1ビット深度（白黒のみ）",
+    "en": "1-bit depth (black and white only)"
+  },
+  {
+    "format": "png",
+    "path": "png/depth_8bit.png",
+    "jp": "8ビット深度（標準）",
+    "en": "8-bit depth (standard)"
+  },
+  {
+    "format": "png",
+    "path": "png/depth_16bit.png",
+    "jp": "16ビット深度（高精度）",
+    "en": "16-bit depth (high precision)"
+  },
+  {
+    "format": "png",
+    "path": "png/compression_0.png",
+    "jp": "圧縮なし（最大ファイルサイズ）",
+    "en": "No compression (maximum file size)"
+  },
+  {
+    "format": "png",
+    "path": "png/compression_6.png",
+    "jp": "標準圧縮（デフォルト）",
+    "en": "Standard compression (default)"
+  },
+  {
+    "format": "png",
+    "path": "png/compression_9.png",
+    "jp": "最大圧縮（最小ファイルサイズ）",
+    "en": "Maximum compression (minimum file size)"
+  },
+  {
+    "format": "png",
+    "path": "png/alpha_opaque.png",
+    "jp": "完全不透明",
+    "en": "Completely opaque"
+  },
+  {
+    "format": "png",
+    "path": "png/alpha_semitransparent.png",
+    "jp": "半透明（部分的透明度）",
+    "en": "Semi-transparent (partial transparency)"
+  },
+  {
+    "format": "png",
+    "path": "png/alpha_transparent.png",
+    "jp": "透明領域あり",
+    "en": "Has transparent areas"
+  },
+  {
+    "format": "png",
+    "path": "png/filter_none.png",
+    "jp": "フィルターなし",
+    "en": "No filter"
+  },
+  {
+    "format": "png",
+    "path": "png/filter_sub.png",
+    "jp": "Subフィルター（水平予測）",
+    "en": "Sub filter (horizontal prediction)"
+  },
+  {
+    "format": "png",
+    "path": "png/filter_up.png",
+    "jp": "Upフィルター（垂直予測）",
+    "en": "Up filter (vertical prediction)"
+  },
+  {
+    "format": "png",
+    "path": "png/filter_average.png",
+    "jp": "Averageフィルター（平均予測）",
+    "en": "Average filter (average prediction)"
+  },
+  {
+    "format": "png",
+    "path": "png/filter_paeth.png",
+    "jp": "Paethフィルター（複合予測）",
+    "en": "Paeth filter (complex prediction)"
+  },
+  {
+    "format": "png",
+    "path": "png/metadata_none.png",
+    "jp": "メタデータなし",
+    "en": "No metadata"
+  },
+  {
+    "format": "png",
+    "path": "png/metadata_text.png",
+    "jp": "テキストメタデータ",
+    "en": "Text metadata"
+  },
+  {
+    "format": "png",
+    "path": "png/metadata_compressed.png",
+    "jp": "圧縮テキストメタデータ",
+    "en": "Compressed text metadata"
+  },
+  {
+    "format": "png",
+    "path": "png/metadata_international.png",
+    "jp": "国際化テキスト（UTF-8）",
+    "en": "International text (UTF-8)"
+  },
+  {
+    "format": "png",
+    "path": "png/chunk_gamma.png",
+    "jp": "ガンマ補正情報",
+    "en": "Gamma correction information"
+  },
+  {
+    "format": "png",
+    "path": "png/chunk_background.png",
+    "jp": "背景色指定",
+    "en": "Background color specification"
+  },
+  {
+    "format": "png",
+    "path": "png/chunk_transparency.png",
+    "jp": "透明色指定",
+    "en": "Transparent color specification"
+  },
+  {
+    "format": "png",
+    "path": "png/critical_16bit_palette.png",
+    "jp": "16ビットからパレットへの変換（大幅な色情報損失）",
+    "en": "16-bit to palette conversion (significant color information loss)"
+  },
+  {
+    "format": "png",
+    "path": "png/critical_alpha_grayscale.png",
+    "jp": "RGBAからグレースケール+透明度への変換",
+    "en": "RGBA to grayscale with alpha conversion"
+  },
+  {
+    "format": "png",
+    "path": "png/critical_maxcompression_paeth.png",
+    "jp": "最大圧縮とPaethフィルターの組み合わせ",
+    "en": "Maximum compression with Paeth filter combination"
+  },
+  {
+    "format": "png",
+    "path": "png/critical_interlace_highres.png",
+    "jp": "インターレースと高解像度の組み合わせ",
+    "en": "Interlace with high resolution combination"
+  }
+]
