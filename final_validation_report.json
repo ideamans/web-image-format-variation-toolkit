@@ -1,0 +1,792 @@
+{
+  "summary": {
+    "total_tested": 31,
+    "total_passed": 31,
+    "total_failed": 0,
+    "success_rate": 100.0
+  },
+  "category_summary": {
+    "jpeg": {
+      "passed": 13,
+      "failed": 0,
+      "total": 13
+    },
+    "png": {
+      "passed": 18,
+      "failed": 0,
+      "total": 18
+    }
+  },
+  "detailed_results": {
+    "jpeg": [
+      {
+        "filename": "colorspace_rgb.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "colorspace": "RGB"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "RGB",
+            "actual": "RGB",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colorspace_cmyk.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "colorspace": "CMYK"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "CMYK",
+            "actual": "CMYK",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colorspace_grayscale.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "colorspace": "L"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "L",
+            "actual": "L",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "quality_20.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "quality_range": [
+            15,
+            25
+          ]
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "quality_file_size": {
+            "passed": true,
+            "expected": "50000-200000 bytes",
+            "actual": "65235 bytes",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "quality_50.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "quality_range": [
+            45,
+            55
+          ]
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "quality_file_size": {
+            "passed": true,
+            "expected": "100000-300000 bytes",
+            "actual": "111789 bytes",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "quality_80.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "quality_range": [
+            75,
+            85
+          ]
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "quality_file_size": {
+            "passed": true,
+            "expected": "150000-400000 bytes",
+            "actual": "214207 bytes",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "quality_95.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "quality_range": [
+            90,
+            100
+          ]
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "quality_file_size": {
+            "passed": true,
+            "expected": "300000-1000000 bytes",
+            "actual": "575306 bytes",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "encoding_baseline.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "progressive": false
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "progressive_encoding": {
+            "passed": true,
+            "expected": "False",
+            "actual": "detected",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "encoding_progressive.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "progressive": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "progressive_encoding": {
+            "passed": true,
+            "expected": "True",
+            "actual": "detected",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_none.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_exif": false
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_exif": {
+            "passed": true,
+            "expected": "False",
+            "actual": "False",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_basic_exif.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_exif": true,
+          "min_exif_tags": 1
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_exif": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "min_exif_tags": {
+            "passed": true,
+            "expected": ">= 1",
+            "actual": "21",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_gps.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_exif": true,
+          "has_gps": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_exif": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_gps": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_full_exif.jpg",
+        "category": "jpeg",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_exif": true,
+          "min_exif_tags": 10
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_exif": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "min_exif_tags": {
+            "passed": true,
+            "expected": ">= 10",
+            "actual": "21",
+            "details": null
+          }
+        },
+        "errors": []
+      }
+    ],
+    "png": [
+      {
+        "filename": "colortype_grayscale.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "color_mode": "L"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "L",
+            "actual": "L",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colortype_palette.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "color_mode": "P"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "P",
+            "actual": "P",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colortype_rgb.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "color_mode": "RGB"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "RGB",
+            "actual": "RGB",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colortype_rgba.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "color_mode": "RGBA"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "RGBA",
+            "actual": "RGBA",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "colortype_grayscale_alpha.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "color_mode": "LA"
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "color_mode": {
+            "passed": true,
+            "expected": "LA",
+            "actual": "LA",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "depth_1bit.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "bit_depth": 1
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "bit_depth": {
+            "passed": true,
+            "expected": "1-bit",
+            "actual": "1-bit",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "depth_8bit.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "bit_depth": 8
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "bit_depth": {
+            "passed": true,
+            "expected": "8-bit",
+            "actual": "8-bit",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "depth_16bit.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "bit_depth": 16
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "bit_depth": {
+            "passed": true,
+            "expected": "16-bit",
+            "actual": "16-bit",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "compression_0.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "compression_level": 0
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "compression_6.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "compression_level": 6
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "compression_9.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "compression_level": 9
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "alpha_opaque.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_transparency": false
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_transparency": {
+            "passed": true,
+            "expected": "False",
+            "actual": "False",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "alpha_semitransparent.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_transparency": true,
+          "alpha_variance": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_transparency": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "alpha_variance": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": "Alpha std dev: 40.9"
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "alpha_transparent.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_transparency": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_transparency": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "interlace_none.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "interlaced": false
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "interlaced": {
+            "passed": true,
+            "expected": "False",
+            "actual": "False",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "interlace_adam7.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "interlaced": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "interlaced": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_none.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_text_chunks": false
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_text_chunks": {
+            "passed": true,
+            "expected": "False",
+            "actual": "False",
+            "details": null
+          }
+        },
+        "errors": []
+      },
+      {
+        "filename": "metadata_text.png",
+        "category": "png",
+        "variation_type": "variation",
+        "expected_specs": {
+          "has_text_chunks": true
+        },
+        "passed": true,
+        "tests": {
+          "file_readable": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          },
+          "has_text_chunks": {
+            "passed": true,
+            "expected": "True",
+            "actual": "True",
+            "details": null
+          }
+        },
+        "errors": []
+      }
+    ]
+  }
+}
