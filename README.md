@@ -1,6 +1,6 @@
 # 画像処理テストツールキット
 
-JPEGとPNG形式の包括的なバリエーション画像を生成し、画像変換ツールの品質評価を行うためのPythonツールキットです。
+JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、画像変換ツールの品質評価を行うためのPythonツールキットです。
 
 ## 📋 目次
 
@@ -34,15 +34,16 @@ JPEGとPNG形式の包括的なバリエーション画像を生成し、画像�
 
 ### 🔧 主要機能
 
-1. **元画像生成**: JPEG・PNG形式の理想的なテスト画像を生成
-2. **バリエーション作成**: 56種類の異なる形式バリエーションを自動生成
-3. **画像比較**: ディレクトリ間での画像品質比較（PSNR・SSIM計算）
+1. **元画像生成**: JPEG・PNG・GIF形式の理想的なテスト画像を生成
+2. **バリエーション作成**: 76種類の異なる形式バリエーションを自動生成
+3. **画像比較**: ディレクトリ間での画像品質比較（PSNR・SSIM計算、GIFアニメーション対応）
 4. **仕様適合性検証**: 生成画像が期待する仕様を満たすかの自動検証
 
 ### 📊 対応形式
 
-- **JPEG**: 25種類のバリエーション（色空間、品質、エンコーディング、メタデータ等）
-- **PNG**: 33種類のバリエーション（色タイプ、ビット深度、透明度、圧縮等）
+- **JPEG**: 24種類のバリエーション（色空間、品質、エンコーディング、メタデータ等）
+- **PNG**: 32種類のバリエーション（色タイプ、ビット深度、透明度、圧縮等）
+- **GIF**: 20種類のバリエーション（フレーム数、フレームレート、パレット、ディザリング等）
 
 ## 🛠️ セットアップ
 
@@ -111,8 +112,9 @@ python toolkit.py generate-original --test-compliance
 ```
 
 **実行結果:**
-- `output/test_original.jpg` - JPEG テスト画像
-- `output/test_original.png` - PNG テスト画像
+- `output/test_original.jpg` - JPEG テスト画像（2000x1500）
+- `output/test_original.png` - PNG テスト画像（1500x1500）
+- `output/test_original.gif` - GIF テストアニメーション（200x200、10フレーム）
 
 ### ステップ2: バリエーション画像の生成
 
@@ -121,14 +123,19 @@ python toolkit.py generate-variations --test-compliance
 ```
 
 **実行結果:**
-- `output/jpeg/` - 25種類のJPEGバリエーション
-- `output/png/` - 33種類のPNGバリエーション
+- `output/jpeg/` - 24種類のJPEGバリエーション
+- `output/png/` - 32種類のPNGバリエーション
+- `output/gif/` - 20種類のGIFバリエーション
+- `output/index.json` - 機械可読なメタデータファイル（79項目）
 
 ### ステップ3: 画像の比較
 
 ```bash
 # 同一ディレクトリの比較例
 python toolkit.py compare-directories output/jpeg output/png
+
+# GIFアニメーション比較（フレーム毎のPSNR/SSIM計算）
+python toolkit.py compare-directories output/gif test_output/gif
 
 # CSV形式で結果保存
 python toolkit.py compare-directories output/jpeg output/png --output-format csv --output-file comparison.csv
@@ -224,7 +231,7 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 
 ## 📋 生成される画像バリエーション
 
-### JPEG バリエーション (25種類)
+### JPEG バリエーション (24種類)
 
 | カテゴリ | ファイル名 | 説明 |
 |----------|------------|------|
@@ -253,7 +260,7 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `critical_progressive_fullmeta.jpg` | プログレッシブ + 完全メタデータ |
 | | `critical_thumbnail_progressive.jpg` | サムネイル + プログレッシブ |
 
-### PNG バリエーション (33種類)
+### PNG バリエーション (32種類)
 
 | カテゴリ | ファイル名 | 説明 |
 |----------|------------|------|
@@ -290,6 +297,31 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `critical_maxcompression_paeth.png` | 最大圧縮 + Paethフィルター |
 | | `critical_interlace_highres.png` | インターレース + 高解像度 |
 
+### GIF バリエーション (20種類)
+
+| カテゴリ | ファイル名 | 説明 |
+|----------|------------|------|
+| **フレーム数** | `single.gif` | 単一フレーム（静止画） |
+| | `frames_25.gif` | 25フレームアニメーション |
+| **フレームレート** | `slow.gif` | 低速（5 FPS） |
+| | `fast.gif` | 高速（25 FPS） |
+| **パレット** | `2colors.gif` | 2色パレット（最小） |
+| | `16colors.gif` | 16色パレット |
+| | `256colors.gif` | 256色パレット（最大） |
+| **ディザリング** | `no_dither.gif` | ディザリングなし |
+| | `floyd_steinberg.gif` | Floyd-Steinbergディザリング |
+| | `ordered_dither.gif` | 順序ディザリング |
+| **最適化** | `unoptimized.gif` | 最適化なし |
+| | `optimized.gif` | フレーム差分最適化 |
+| **ループ** | `no_loop.gif` | 単一再生 |
+| | `infinite_loop.gif` | 無限ループ |
+| **複合パターン** | `critical_fast_2colors.gif` | 高速 + 2色パレット |
+| | `critical_25frames_16colors_dither.gif` | 25フレーム + 16色 + ディザリング |
+| | `critical_optimized_complex.gif` | 最適化 + 複雑アニメーション |
+| | `critical_dither_smallpalette.gif` | ディザリング + 小パレット |
+| | `critical_fast_256colors_loop.gif` | 高速 + 256色 + ループ |
+| | `critical_single_optimized.gif` | 単一フレーム + 最適化 |
+
 ## 🔍 比較・分析機能
 
 ### 出力される指標
@@ -299,8 +331,10 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | **ファイルサイズ** | バイト単位のファイルサイズ | - | 圧縮効率の指標 |
 | **サイズ比率** | サイズの比率 | 1.0 = 同じ | 圧縮率の変化 |
 | **解像度** | 画像の幅×高さ | width×height | 解像度の維持確認 |
-| **PSNR** | 画質劣化指標（高いほど良い） | 20-50dB (∞=同一) | >40dB: 高品質<br>30-40dB: 中品質<br><30dB: 低品質 |
-| **SSIM** | 構造類似度（高いほど良い） | 0.0-1.0 (1.0=完全一致) | >0.95: 非常に類似<br>0.8-0.95: 類似<br><0.8: 異なる |
+| **PSNR(min)** | 画質劣化指標（アニメーションは最小値） | 20-50dB (∞=同一) | >40dB: 高品質<br>30-40dB: 中品質<br><30dB: 低品質 |
+| **SSIM(min)** | 構造類似度（アニメーションは最小値） | 0.0-1.0 (1.0=完全一致) | >0.95: 非常に類似<br>0.8-0.95: 類似<br><0.8: 異なる |
+| **フレーム数** | GIFアニメーションのフレーム数 | - | アニメーション対応確認 |
+| **フレームレート** | GIFアニメーションのFPS | - | 再生速度の確認 |
 
 ### レポート形式
 
@@ -309,16 +343,16 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 ================================================================================
 IMAGE COMPARISON REPORT
 ================================================================================
-Directory A: output/jpeg (25 files)
-Directory B: converted_jpeg (25 files)
-Common files: 25
+Directory A: output/jpeg (24 files)
+Directory B: converted_jpeg (24 files)
+Common files: 24
 
 DETAILED COMPARISON
 --------------------------------------------------------------------------------
-Filename                       Size A     Size B     Ratio    PSNR     SSIM    
+Filename                       Size A     Size B     Ratio    PSNR(min)  SSIM(min)  Frames A  Frames B  FPS A   FPS B
 --------------------------------------------------------------------------------
-quality_80.jpg                 209.2KB    195.4KB    0.93     38.5     0.952
-quality_95.jpg                 561.8KB    523.1KB    0.93     42.1     0.978
+quality_80.jpg                 209.2KB    195.4KB    0.93     38.5       0.952      N/A       N/A       N/A     N/A
+fast_25fps.gif                 30.4KB     28.1KB     0.92     35.2       0.891      20        20        25.0    25.0
 ...
 ```
 

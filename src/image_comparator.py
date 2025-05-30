@@ -113,33 +113,41 @@ def _compare_images(image_a_path, image_b_path, filename):
         result['size_diff'] = result['size_b'] - result['size_a']
         result['size_ratio'] = result['size_b'] / result['size_a'] if result['size_a'] > 0 else 0
         
-        # Open images
-        with Image.open(image_a_path) as img_a, Image.open(image_b_path) as img_b:
-            # Get resolutions
-            result['resolution_a'] = f"{img_a.width}x{img_a.height}"
-            result['resolution_b'] = f"{img_b.width}x{img_b.height}"
-            result['resolution_match'] = (img_a.width == img_b.width and img_a.height == img_b.height)
-            
-            # Get color modes
-            result['mode_a'] = img_a.mode
-            result['mode_b'] = img_b.mode
-            result['mode_match'] = img_a.mode == img_b.mode
-            
-            # Calculate PSNR and SSIM if possible
-            if result['resolution_match']:
-                try:
-                    psnr_value, ssim_value = _calculate_image_metrics(img_a, img_b)
-                    result['psnr'] = psnr_value
-                    result['ssim'] = ssim_value
-                except Exception as e:
+        # Check if files are GIFs
+        is_gif_a = str(image_a_path).lower().endswith('.gif')
+        is_gif_b = str(image_b_path).lower().endswith('.gif')
+        
+        if is_gif_a and is_gif_b:
+            # Handle GIF comparison
+            result.update(_compare_gif_animations(image_a_path, image_b_path))
+        else:
+            # Handle static image comparison
+            with Image.open(image_a_path) as img_a, Image.open(image_b_path) as img_b:
+                # Get resolutions
+                result['resolution_a'] = f"{img_a.width}x{img_a.height}"
+                result['resolution_b'] = f"{img_b.width}x{img_b.height}"
+                result['resolution_match'] = (img_a.width == img_b.width and img_a.height == img_b.height)
+                
+                # Get color modes
+                result['mode_a'] = img_a.mode
+                result['mode_b'] = img_b.mode
+                result['mode_match'] = img_a.mode == img_b.mode
+                
+                # Calculate PSNR and SSIM if possible
+                if result['resolution_match']:
+                    try:
+                        psnr_value, ssim_value = _calculate_image_metrics(img_a, img_b)
+                        result['psnr'] = psnr_value
+                        result['ssim'] = ssim_value
+                    except Exception as e:
+                        result['psnr'] = None
+                        result['ssim'] = None
+                        result['metrics_error'] = str(e)
+                else:
                     result['psnr'] = None
                     result['ssim'] = None
-                    result['metrics_error'] = str(e)
-            else:
-                result['psnr'] = None
-                result['ssim'] = None
-                result['metrics_error'] = "Resolution mismatch"
-                
+                    result['metrics_error'] = "Resolution mismatch"
+                    
     except Exception as e:
         result['error'] = str(e)
         
@@ -181,6 +189,165 @@ def _calculate_image_metrics(img_a, img_b):
     return psnr_value, ssim_value
 
 
+def _compare_gif_animations(gif_a_path, gif_b_path):
+    """
+    Compare two GIF animations frame by frame and return average metrics.
+    
+    Args:
+        gif_a_path (Path): Path to first GIF file
+        gif_b_path (Path): Path to second GIF file
+        
+    Returns:
+        dict: Comparison results with average PSNR/SSIM across all frames
+    """
+    result = {}
+    
+    try:
+        # Open both GIF files
+        with Image.open(gif_a_path) as gif_a, Image.open(gif_b_path) as gif_b:
+            # Extract all frames from both GIFs
+            frames_a = _extract_gif_frames(gif_a)
+            frames_b = _extract_gif_frames(gif_b)
+            
+            # Get basic properties
+            result['frames_a'] = len(frames_a)
+            result['frames_b'] = len(frames_b)
+            result['frame_count_match'] = len(frames_a) == len(frames_b)
+            
+            # Get frame rate information
+            try:
+                # Get duration of first frame (in milliseconds)
+                duration_a = gif_a.info.get('duration', 100)  # Default 100ms
+                duration_b = gif_b.info.get('duration', 100)
+                
+                # Calculate FPS (frames per second)
+                result['framerate_a'] = round(1000 / duration_a, 2) if duration_a > 0 else None
+                result['framerate_b'] = round(1000 / duration_b, 2) if duration_b > 0 else None
+                result['framerate_match'] = result['framerate_a'] == result['framerate_b']
+            except:
+                result['framerate_a'] = None
+                result['framerate_b'] = None
+                result['framerate_match'] = None
+            
+            if frames_a and frames_b:
+                # Get resolution from first frame
+                result['resolution_a'] = f"{frames_a[0].width}x{frames_a[0].height}"
+                result['resolution_b'] = f"{frames_b[0].width}x{frames_b[0].height}"
+                result['resolution_match'] = (frames_a[0].width == frames_b[0].width and 
+                                            frames_a[0].height == frames_b[0].height)
+                
+                # Get color modes
+                result['mode_a'] = frames_a[0].mode
+                result['mode_b'] = frames_b[0].mode
+                result['mode_match'] = frames_a[0].mode == frames_b[0].mode
+                
+                # Calculate frame-by-frame metrics if resolutions match
+                if result['resolution_match'] and result['frame_count_match']:
+                    psnr_values = []
+                    ssim_values = []
+                    
+                    min_frames = min(len(frames_a), len(frames_b))
+                    
+                    for i in range(min_frames):
+                        try:
+                            frame_psnr, frame_ssim = _calculate_image_metrics(frames_a[i], frames_b[i])
+                            if frame_psnr is not None:
+                                # Handle infinite PSNR (identical frames)
+                                if np.isinf(frame_psnr):
+                                    psnr_values.append(100.0)  # Set very high value for identical frames
+                                else:
+                                    psnr_values.append(frame_psnr)
+                            if frame_ssim is not None:
+                                ssim_values.append(frame_ssim)
+                        except Exception as e:
+                            print(f"Warning: Failed to calculate metrics for frame {i}: {e}")
+                            continue
+                    
+                    # Use minimum values for animation quality (worst frame determines quality)
+                    if psnr_values:
+                        result['psnr'] = float(np.min(psnr_values))  # Minimum PSNR (worst frame)
+                        result['psnr_min'] = float(np.min(psnr_values))
+                        result['psnr_max'] = float(np.max(psnr_values))
+                        result['psnr_mean'] = float(np.mean(psnr_values))
+                        result['psnr_std'] = float(np.std(psnr_values))
+                    else:
+                        result['psnr'] = None
+                        
+                    if ssim_values:
+                        result['ssim'] = float(np.min(ssim_values))  # Minimum SSIM (worst frame)
+                        result['ssim_min'] = float(np.min(ssim_values))
+                        result['ssim_max'] = float(np.max(ssim_values))
+                        result['ssim_mean'] = float(np.mean(ssim_values))
+                        result['ssim_std'] = float(np.std(ssim_values))
+                    else:
+                        result['ssim'] = None
+                        
+                    result['frames_compared'] = len(psnr_values)
+                    
+                else:
+                    result['psnr'] = None
+                    result['ssim'] = None
+                    if not result['resolution_match']:
+                        result['metrics_error'] = "Resolution mismatch"
+                    elif not result['frame_count_match']:
+                        result['metrics_error'] = f"Frame count mismatch ({result['frames_a']} vs {result['frames_b']})"
+                    else:
+                        result['metrics_error'] = "Unknown error"
+            else:
+                result['psnr'] = None
+                result['ssim'] = None
+                result['metrics_error'] = "Failed to extract frames"
+                
+    except Exception as e:
+        result['metrics_error'] = f"GIF comparison error: {str(e)}"
+        result['psnr'] = None
+        result['ssim'] = None
+    
+    return result
+
+
+def _extract_gif_frames(gif_image):
+    """
+    Extract all frames from a GIF image.
+    
+    Args:
+        gif_image (PIL.Image): Opened GIF image
+        
+    Returns:
+        list: List of PIL.Image frames
+    """
+    frames = []
+    
+    try:
+        # Reset to first frame
+        gif_image.seek(0)
+        
+        while True:
+            # Copy current frame
+            frame = gif_image.copy()
+            
+            # Convert to consistent format for comparison
+            if frame.mode == 'P':
+                # Convert palette mode to RGBA to handle transparency
+                frame = frame.convert('RGBA')
+            elif frame.mode not in ('RGB', 'RGBA', 'L'):
+                # Convert other modes to RGB
+                frame = frame.convert('RGB')
+                
+            frames.append(frame)
+            
+            # Move to next frame
+            gif_image.seek(gif_image.tell() + 1)
+            
+    except EOFError:
+        # End of frames reached
+        pass
+    except Exception as e:
+        print(f"Warning: Error extracting GIF frames: {e}")
+        
+    return frames
+
+
 def _output_table(report_data, output_file=None):
     """Output comparison results as a formatted table."""
     output_lines = []
@@ -207,7 +374,7 @@ def _output_table(report_data, output_file=None):
         output_lines.append("-" * 80)
         
         # Table header
-        header = f"{'Filename':<30} {'Size A':<10} {'Size B':<10} {'Ratio':<8} {'PSNR':<8} {'SSIM':<8}"
+        header = f"{'Filename':<30} {'Size A':<10} {'Size B':<10} {'Ratio':<8} {'PSNR(min)':<10} {'SSIM(min)':<10} {'Frames A':<9} {'Frames B':<9} {'FPS A':<7} {'FPS B':<7}"
         output_lines.append(header)
         output_lines.append("-" * len(header))
         
@@ -220,8 +387,15 @@ def _output_table(report_data, output_file=None):
             psnr = f"{comp.get('psnr', 0):.2f}" if comp.get('psnr') else "N/A"
             ssim = f"{comp.get('ssim', 0):.3f}" if comp.get('ssim') else "N/A"
             
-            row = f"{filename:<30} {size_a:<10} {size_b:<10} {ratio:<8} {psnr:<8} {ssim:<8}"
+            # Handle GIF frame and FPS information
+            frames_a_info = f"{comp.get('frames_a', 0)}" if comp.get('frames_a') is not None else "N/A"
+            frames_b_info = f"{comp.get('frames_b', 0)}" if comp.get('frames_b') is not None else "N/A"
+            fps_a_info = f"{comp.get('framerate_a', 0):.1f}" if comp.get('framerate_a') is not None else "N/A"
+            fps_b_info = f"{comp.get('framerate_b', 0):.1f}" if comp.get('framerate_b') is not None else "N/A"
+            
+            row = f"{filename:<30} {size_a:<10} {size_b:<10} {ratio:<8} {psnr:<10} {ssim:<10} {frames_a_info:<9} {frames_b_info:<9} {fps_a_info:<7} {fps_b_info:<7}"
             output_lines.append(row)
+            
             
             # Show errors if any
             if comp.get('error'):
@@ -263,7 +437,8 @@ def _output_csv(comparison_results, output_file=None):
     # Select relevant columns
     columns = ['filename', 'size_a', 'size_b', 'size_diff', 'size_ratio', 
                'resolution_a', 'resolution_b', 'resolution_match',
-               'mode_a', 'mode_b', 'mode_match', 'psnr', 'ssim']
+               'mode_a', 'mode_b', 'mode_match', 'psnr', 'ssim',
+               'frames_a', 'frames_b', 'framerate_a', 'framerate_b']
     
     # Filter columns that exist
     available_columns = [col for col in columns if col in df.columns]
