@@ -159,6 +159,20 @@ def validate_jpeg_variations(jpeg_dir):
         'encoding_baseline.jpg': {'progressive': False},
         'encoding_progressive.jpg': {'progressive': True},
         
+        # Thumbnail variations
+        'thumbnail_none.jpg': {'has_thumbnail': False},
+        'thumbnail_embedded.jpg': {'has_thumbnail': True},
+        
+        # Subsampling variations
+        'subsampling_444.jpg': {'subsampling': '4:4:4'},
+        'subsampling_422.jpg': {'subsampling': '4:2:2'},
+        'subsampling_420.jpg': {'subsampling': '4:2:0'},
+        
+        # ICC profile variations
+        'icc_none.jpg': {'has_icc_profile': False},
+        'icc_srgb.jpg': {'has_icc_profile': True, 'colorspace_hint': 'sRGB'},
+        'icc_adobergb.jpg': {'has_icc_profile': True, 'colorspace_hint': 'Adobe'},
+        
         # Metadata variations
         'metadata_none.jpg': {'has_exif': False},
         'metadata_basic_exif.jpg': {'has_exif': True, 'min_exif_tags': 1},
@@ -170,6 +184,13 @@ def validate_jpeg_variations(jpeg_dir):
         'orientation_3.jpg': {'orientation': 3},
         'orientation_6.jpg': {'orientation': 6},
         'orientation_8.jpg': {'orientation': 8},
+        
+        # DPI variations
+        'dpi_jfif_units0.jpg': {'dpi_type': 'jfif_units0'},
+        'dpi_jfif_72dpi.jpg': {'dpi_type': 'jfif_72dpi', 'expected_dpi': 72},
+        'dpi_jfif_200dpi.jpg': {'dpi_type': 'jfif_200dpi', 'expected_dpi': 200},
+        'dpi_exif_72dpi.jpg': {'dpi_type': 'exif_72dpi', 'expected_dpi': 72},
+        'dpi_exif_200dpi.jpg': {'dpi_type': 'exif_200dpi', 'expected_dpi': 200},
     }
     
     for filename, specs in jpeg_specs.items():
@@ -284,6 +305,24 @@ def validate_jpeg_file(file_path, filename, expected_specs):
                 except:
                     result.add_test('progressive_encoding', False, progressive_expected, "unknown")
             
+            # Test subsampling using ImageMagick identify
+            if 'subsampling' in expected_specs:
+                expected_subsampling = expected_specs['subsampling']
+                actual_subsampling = get_jpeg_subsampling_imagemagick(file_path)
+                
+                if actual_subsampling:
+                    result.add_test('subsampling', actual_subsampling == expected_subsampling, 
+                                  expected_subsampling, actual_subsampling)
+                else:
+                    result.add_test('subsampling', False, expected_subsampling, "unknown")
+            
+            # Test ICC profile
+            if 'has_icc_profile' in expected_specs:
+                icc_profile = img.info.get('icc_profile')
+                has_icc = icc_profile is not None
+                expected_icc = expected_specs['has_icc_profile']
+                result.add_test('has_icc_profile', has_icc == expected_icc, expected_icc, has_icc)
+            
             # Test EXIF metadata
             if 'has_exif' in expected_specs:
                 try:
@@ -305,12 +344,56 @@ def validate_jpeg_file(file_path, filename, expected_specs):
                         expected_gps = expected_specs['has_gps']
                         result.add_test('has_gps', has_gps == expected_gps, expected_gps, has_gps)
                     
+                    # Test thumbnail
+                    if 'has_thumbnail' in expected_specs:
+                        has_thumbnail = exif_data.get('thumbnail') is not None
+                        expected_thumbnail = expected_specs['has_thumbnail']
+                        result.add_test('has_thumbnail', has_thumbnail == expected_thumbnail, 
+                                      expected_thumbnail, has_thumbnail)
+                    
                     # Test orientation
                     if 'orientation' in expected_specs:
                         orientation_tag = exif_data.get('0th', {}).get(piexif.ImageIFD.Orientation)
                         expected_orientation = expected_specs['orientation']
                         result.add_test('orientation', orientation_tag == expected_orientation, 
                                       expected_orientation, orientation_tag)
+                    
+                    # Test DPI settings
+                    if 'dpi_type' in expected_specs:
+                        dpi_type = expected_specs['dpi_type']
+                        
+                        # Check EXIF resolution data
+                        x_res = exif_data.get('0th', {}).get(piexif.ImageIFD.XResolution)
+                        y_res = exif_data.get('0th', {}).get(piexif.ImageIFD.YResolution)
+                        res_unit = exif_data.get('0th', {}).get(piexif.ImageIFD.ResolutionUnit)
+                        
+                        # Get PIL DPI info (JFIF data)
+                        pil_dpi = img.info.get('dpi', (None, None))
+                        
+                        if dpi_type == 'jfif_units0':
+                            # Should have no resolution info or ratio only
+                            has_no_exif_res = (x_res is None and y_res is None)
+                            result.add_test('dpi_no_exif_resolution', has_no_exif_res, True, has_no_exif_res)
+                            
+                        elif 'expected_dpi' in expected_specs:
+                            expected_dpi = expected_specs['expected_dpi']
+                            
+                            if dpi_type.startswith('jfif_'):
+                                # JFIF-based DPI - check PIL dpi info
+                                if pil_dpi[0] is not None:
+                                    dpi_match = abs(pil_dpi[0] - expected_dpi) <= 1
+                                    result.add_test('jfif_dpi', dpi_match, expected_dpi, pil_dpi[0])
+                                else:
+                                    result.add_test('jfif_dpi', False, expected_dpi, "None")
+                                    
+                            elif dpi_type.startswith('exif_'):
+                                # EXIF-based DPI - check EXIF resolution
+                                if x_res is not None:
+                                    exif_dpi = x_res[0] / x_res[1] if x_res[1] != 0 else 0
+                                    dpi_match = abs(exif_dpi - expected_dpi) <= 1
+                                    result.add_test('exif_dpi', dpi_match, expected_dpi, exif_dpi)
+                                else:
+                                    result.add_test('exif_dpi', False, expected_dpi, "None")
                         
                 except Exception as e:
                     if expected_specs['has_exif']:
@@ -471,6 +554,28 @@ def get_image_bit_depth_imagemagick(file_path):
             return None
             
     except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        return None
+
+
+def get_jpeg_subsampling_imagemagick(file_path):
+    """Get JPEG subsampling information using ImageMagick identify command."""
+    try:
+        result = subprocess.run(['identify', '-verbose', str(file_path)], 
+                              capture_output=True, text=True, check=True)
+        
+        for line in result.stdout.split('\n'):
+            if 'sampling-factor:' in line.lower():
+                # Extract sampling factor like "2x2,1x1,1x1" and convert to standard notation
+                factor = line.split(':')[-1].strip()
+                if '2x2,1x1,1x1' in factor or '2x2' in factor:
+                    return '4:2:0'
+                elif '2x1,1x1,1x1' in factor or '2x1' in factor:
+                    return '4:2:2'
+                elif '1x1,1x1,1x1' in factor or '1x1' in factor:
+                    return '4:4:4'
+        
+        return None
+    except:
         return None
 
 
