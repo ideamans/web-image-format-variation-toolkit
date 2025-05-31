@@ -613,25 +613,53 @@ def _convert_jpeg_icc(source, output_dir, icc):
     if icc == "none":
         cmd = ["convert", source, "+profile", "icc", output_file]
     elif icc == "srgb":
-        # Use ImageMagick with embedded sRGB profile
-        cmd = ["convert", source, "-colorspace", "sRGB", "-strip", "+profile", "!icc,*", "-profile", "/System/Library/ColorSync/Profiles/sRGB Profile.icc", output_file]
-        if not _run_imagemagick_command(cmd):
-            # Fallback: try built-in sRGB profile
-            cmd = ["convert", source, "-colorspace", "sRGB", "-profile", "sRGB.icc", output_file]
+        # Try multiple sRGB profile locations (macOS, Linux)
+        srgb_paths = [
+            "/System/Library/ColorSync/Profiles/sRGB Profile.icc",  # macOS
+            "/usr/share/color/icc/sRGB.icc",  # Linux (downloaded)
+            "/usr/share/color/icc/profiles/sRGB.icc",  # Linux alternative
+            "/usr/share/color/icc/sRGB2014.icc",  # Common Linux name
+        ]
+        
+        success = False
+        for profile_path in srgb_paths:
+            if os.path.exists(profile_path):
+                cmd = ["convert", source, "-colorspace", "sRGB", "-strip", "+profile", "!icc,*", "-profile", profile_path, output_file]
+                if _run_imagemagick_command(cmd):
+                    success = True
+                    break
+        
+        if not success:
+            # Fallback: try built-in sRGB profile name
+            cmd = ["convert", source, "-colorspace", "sRGB", "-profile", "sRGB", output_file]
             if not _run_imagemagick_command(cmd):
                 # Final fallback: simple colorspace conversion
                 cmd = ["convert", source, "-colorspace", "sRGB", output_file]
                 _run_imagemagick_command(cmd)
         return
+        
     elif icc == "adobergb":
-        # Use ImageMagick with Adobe RGB profile
-        cmd = ["convert", source, "-colorspace", "Adobe98", "-strip", "+profile", "!icc,*", "-profile", "/System/Library/ColorSync/Profiles/AdobeRGB1998.icc", output_file]
-        if not _run_imagemagick_command(cmd):
-            # Fallback: try built-in Adobe RGB
-            cmd = ["convert", source, "-colorspace", "Adobe98", "-profile", "AdobeRGB1998.icc", output_file]
+        # Try multiple Adobe RGB profile locations
+        adobe_paths = [
+            "/System/Library/ColorSync/Profiles/AdobeRGB1998.icc",  # macOS
+            "/usr/share/color/icc/AdobeRGB1998.icc",  # Linux
+            "/usr/share/color/icc/profiles/AdobeRGB1998.icc",  # Linux alternative
+        ]
+        
+        success = False
+        for profile_path in adobe_paths:
+            if os.path.exists(profile_path):
+                cmd = ["convert", source, "-colorspace", "RGB", "-strip", "+profile", "!icc,*", "-profile", profile_path, output_file]
+                if _run_imagemagick_command(cmd):
+                    success = True
+                    break
+        
+        if not success:
+            # Fallback: try built-in Adobe RGB colorspace
+            cmd = ["convert", source, "-colorspace", "RGB", "-profile", "AdobeRGB", output_file]
             if not _run_imagemagick_command(cmd):
-                # Final fallback: simple colorspace conversion
-                cmd = ["convert", source, "-colorspace", "Adobe98", output_file]
+                # Final fallback: simple colorspace conversion to RGB
+                cmd = ["convert", source, "-colorspace", "RGB", output_file]
                 _run_imagemagick_command(cmd)
         return
     else:
@@ -958,12 +986,32 @@ def _convert_png_critical_combinations(source, output_dir):
     _run_imagemagick_command(cmd)
 
 
+# Global variable to cache detected ImageMagick command
+_imagemagick_cmd = None
+
 def _run_imagemagick_command(cmd):
     """Run ImageMagick command with error handling."""
+    global _imagemagick_cmd
+    
+    # Detect and cache ImageMagick command if not already done
+    if _imagemagick_cmd is None:
+        # Try both 'magick' and 'convert' commands
+        for test_cmd in ['magick', 'convert']:
+            try:
+                subprocess.run([test_cmd, '--version'], capture_output=True, check=True)
+                _imagemagick_cmd = test_cmd
+                print(f"Detected ImageMagick command: {_imagemagick_cmd}")
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+        
+        if _imagemagick_cmd is None:
+            print("ImageMagick not found. Please install ImageMagick.")
+            return False
+    
     try:
-        # Convert 'convert' to 'magick' for ImageMagick v7 compatibility
-        if cmd[0] == 'convert':
-            cmd[0] = 'magick'
+        # Replace command with detected ImageMagick command
+        cmd[0] = _imagemagick_cmd
         
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True

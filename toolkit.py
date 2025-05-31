@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from src.image_generator import generate_original_images, test_original_compliance
 from src.variation_generator import generate_variations, test_variation_compliance
 from src.image_comparator import compare_directories
-from src.variation_validator import validate_all_variations, save_validation_report
 
 
 def main():
@@ -30,7 +29,10 @@ Examples:
   python toolkit.py generate-original --test-compliance
   python toolkit.py generate-variations --source-dir originals --output-dir variations
   python toolkit.py compare-directories dir_a dir_b --output-format json
-  python toolkit.py validate-variations --report-file validation_report.json
+  
+For testing and validation, use pytest:
+  pytest tests/test_original_generation.py
+  pytest tests/test_variation_generation.py
         """
     )
     
@@ -97,20 +99,6 @@ Examples:
         help='Save comparison results to file'
     )
     
-    # Validate variations command
-    validate_parser = subparsers.add_parser(
-        'validate-variations',
-        help='Validate that generated variations meet specifications'
-    )
-    validate_parser.add_argument(
-        '--output-dir',
-        default='output',
-        help='Directory containing variations to validate (default: output)'
-    )
-    validate_parser.add_argument(
-        '--report-file',
-        help='Save validation report to file (JSON or text format)'
-    )
     
     args = parser.parse_args()
     
@@ -143,14 +131,6 @@ Examples:
                 output_format=args.output_format,
                 output_file=args.output_file
             )
-            
-        elif args.command == 'validate-variations':
-            print("Validating generated variations...")
-            results = validate_all_variations(args.output_dir)
-            
-            if args.report_file:
-                save_validation_report(results, args.report_file)
-            
         print("\nOperation completed successfully!")
         return 0
         
