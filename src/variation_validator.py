@@ -258,15 +258,15 @@ def validate_jpeg_file(file_path, filename, expected_specs):
                 # This is a rough heuristic - lower quality should mean smaller files
                 quality_range = expected_specs['quality_range']
                 
-                # Compare with a reference - we'll use relative sizing
+                # Compare with a reference - adjusted for 640x480 resolution
                 if quality_range[0] <= 30:  # Low quality
-                    expected_size_range = (50000, 200000)  # 50KB - 200KB
+                    expected_size_range = (15000, 80000)  # 15KB - 80KB
                 elif quality_range[0] <= 60:  # Medium quality
-                    expected_size_range = (100000, 300000)  # 100KB - 300KB
+                    expected_size_range = (25000, 120000)  # 25KB - 120KB
                 elif quality_range[0] <= 85:  # High quality
-                    expected_size_range = (150000, 400000)  # 150KB - 400KB
+                    expected_size_range = (50000, 200000)  # 50KB - 200KB
                 else:  # Very high quality
-                    expected_size_range = (300000, 1000000)  # 300KB - 1MB
+                    expected_size_range = (100000, 400000)  # 100KB - 400KB
                 
                 size_ok = expected_size_range[0] <= file_size <= expected_size_range[1]
                 result.add_test('quality_file_size', size_ok, 

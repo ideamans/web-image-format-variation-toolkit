@@ -15,7 +15,7 @@ import os
 from pathlib import Path
 
 
-def create_jpeg_test_image(width=2000, height=1500):
+def create_jpeg_test_image(width=640, height=480):
     """
     Generate an ideal JPEG test image with diverse frequency components and color information.
     
@@ -98,7 +98,7 @@ def create_jpeg_test_image(width=2000, height=1500):
     return Image.fromarray(img)
 
 
-def create_png_test_image(width=1500, height=1500):
+def create_png_test_image(width=480, height=480):
     """
     Generate an ideal PNG test image with transparency, sharp edges, and various elements.
     
@@ -462,13 +462,13 @@ def generate_original_images(output_dir="output"):
     try:
         # Generate JPEG test image
         print("\n1. Creating JPEG test image...")
-        jpeg_img = create_jpeg_test_image(width=2000, height=1500)
+        jpeg_img = create_jpeg_test_image(width=640, height=480)
         jpeg_path = output_path / "test_original.jpg"
         save_jpeg_with_metadata(jpeg_img, str(jpeg_path))
         
         # Generate PNG test image  
         print("\n2. Creating PNG test image...")
-        png_img = create_png_test_image(width=1500, height=1500)
+        png_img = create_png_test_image(width=480, height=480)
         png_path = output_path / "test_original.png"
         save_png_with_metadata(png_img, str(png_path))
         
