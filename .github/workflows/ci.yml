@@ -32,6 +32,21 @@ jobs:
             # Install additional image codecs
             sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev
             
+            # Install ICC color profiles
+            sudo apt-get install -y icc-profiles icc-profiles-free
+            
+            # Create directory for ICC profiles if it doesn't exist
+            sudo mkdir -p /usr/share/color/icc/profiles
+            
+            # Download common ICC profiles if not available
+            if [ ! -f "/usr/share/color/icc/sRGB.icc" ]; then
+              sudo wget -q -O /usr/share/color/icc/sRGB.icc https://www.color.org/srgbprofiles.xalter || true
+            fi
+            
+            # List available ICC profiles for debugging
+            echo "Available ICC profiles:"
+            find /usr/share/color -name "*.icc" 2>/dev/null || echo "No ICC profiles found"
+            
             # Verify ImageMagick installation
             magick -version || convert -version
           else
