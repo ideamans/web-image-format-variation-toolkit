@@ -166,6 +166,13 @@ Create an animated sequence containing:
 - `jpeg/thumbnail_none.jpg` - JPEG without embedded thumbnail
 - `jpeg/thumbnail_embedded.jpg` - JPEG with embedded EXIF thumbnail
 
+**Exif Orientation**
+
+- `jpeg/orientation_1.jpg` - Normal orientation (Top-left)
+- `jpeg/orientation_3.jpg` - Rotated 180 degrees (Bottom-right)
+- `jpeg/orientation_6.jpg` - Rotated 90 degrees clockwise (Right-top)
+- `jpeg/orientation_8.jpg` - Rotated 90 degrees counter-clockwise (Left-bottom)
+
 #### Numerical Factors
 
 **Quality Settings**
@@ -209,6 +216,10 @@ Create an animated sequence containing:
 **Thumbnail + Progressive**
 
 - `jpeg/critical_thumbnail_progressive.jpg` - Progressive JPEG with embedded thumbnail, potential compatibility issues
+
+**Orientation + Metadata**
+
+- `jpeg/critical_orientation_metadata.jpg` - Rotated orientation with complex metadata, potential processing conflicts
 
 ### PNG Variations
 
@@ -357,12 +368,17 @@ Create an animated sequence containing:
    - Issue: EXIF placement in Progressive format
    - Metadata position/order changes and viewer compatibility issues
 
-5. **GIF: High Frame Rate + Small Palette**
+5. **JPEG: Exif Orientation + Complex Processing**
+   - Issue: Image rotation through EXIF orientation tag can interfere with other image processing
+   - Different software handles orientation differently (some rotate pixels, others just set metadata)
+   - Recommendation: Test orientation handling in target environments thoroughly
+
+6. **GIF: High Frame Rate + Small Palette**
    - Issue: Fast animation with limited colors causes severe dithering artifacts
    - Temporal coherence loss and flickering effects
    - Recommendation: Use larger palettes (64+ colors) for frame rates above 15 FPS
 
-6. **GIF: Many Frames + Optimization**
+7. **GIF: Many Frames + Optimization**
    - Issue: Frame difference optimization with complex scenes
    - Can produce larger files than unoptimized versions
    - Recommendation: Test optimization benefit on a per-case basis
@@ -401,11 +417,11 @@ python toolkit.py generate-variations [--source-dir SOURCE] [--output-dir OUTPUT
 
 ```
 output/
-├── index.json              # Machine-readable metadata (79 entries)
+├── index.json              # Machine-readable metadata (84 entries)
 ├── test_original.jpg       # JPEG source image (2000x1500)
 ├── test_original.png       # PNG source image (1500x1500)
 ├── test_original.gif       # GIF source animation (200x200, 10 frames)
-├── jpeg/                   # 24 JPEG variations
+├── jpeg/                   # 29 JPEG variations
 │   ├── colorspace_rgb.jpg
 │   ├── quality_80.jpg
 │   └── ...
@@ -451,6 +467,7 @@ python toolkit.py validate-variations [--output-dir OUTPUT] [--report-file FILE]
   - Quality level ≥ 95
   - Subsampling is 4:4:4
   - EXIF metadata presence
+  - Orientation tag verification
   - Content diversity (frequency analysis)
 
 - **PNG Requirements Check**:
@@ -532,7 +549,7 @@ The `output/index.json` file contains comprehensive metadata for all generated i
 
 #### Index File Features
 
-- **Total entries**: 79 items (3 originals + 76 variations)
+- **Total entries**: 84 items (3 originals + 81 variations)
 - **Format identification**: "jpeg", "png", or "gif"
 - **Relative paths**: From output directory root
 - **Bilingual descriptions**: Japanese and English explanations
@@ -616,7 +633,7 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 
 - **16-bit PNG Generation**: OpenCV-based true 16-bit depth creation with sub-pixel noise
 - **Accurate Property Detection**: ImageMagick `identify` command integration
-- **100% Compliance Achievement**: All 79 variations pass specification requirements
+- **100% Compliance Achievement**: All 84 variations pass specification requirements
 - **Bilingual Documentation**: Japanese and English descriptions for international use
 
 ### Automation and Workflow Integration

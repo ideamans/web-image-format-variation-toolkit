@@ -150,6 +150,12 @@ def generate_jpeg_variations(source_file, output_dir):
             ("none", "icc", "カラープロファイルなし", "No color profile"),
             ("srgb", "icc", "sRGBカラープロファイル（Web標準）", "sRGB color profile (web standard)"),
             ("adobergb", "icc", "Adobe RGBカラープロファイル（広色域）", "Adobe RGB color profile (wide gamut)"),
+            
+            # Exif Orientation variations
+            (1, "orientation", "通常の向き（Top-left）", "Normal orientation (Top-left)"),
+            (3, "orientation", "180度回転（Bottom-right）", "Rotated 180 degrees (Bottom-right)"),
+            (6, "orientation", "時計回りに90度回転（Right-top）", "Rotated 90 degrees clockwise (Right-top)"),
+            (8, "orientation", "反時計回りに90度回転（Left-bottom）", "Rotated 90 degrees counter-clockwise (Left-bottom)"),
         ]
         
         # Generate variations
@@ -175,6 +181,9 @@ def generate_jpeg_variations(source_file, output_dir):
             elif category == "icc":
                 _convert_jpeg_icc(source_file, output_dir, param)
                 filename = f"icc_{param}.jpg"
+            elif category == "orientation":
+                _convert_jpeg_orientation(source_file, output_dir, param)
+                filename = f"orientation_{param}.jpg"
             
             # Add to index
             variations_index.append({
@@ -188,7 +197,8 @@ def generate_jpeg_variations(source_file, output_dir):
         critical_combinations = [
             ("critical_cmyk_lowquality.jpg", "CMYK色空間と低品質の組み合わせ（高圧縮）", "CMYK color space with low quality (high compression)"),
             ("critical_progressive_fullmeta.jpg", "プログレッシブ形式と完全メタデータの組み合わせ", "Progressive format with complete metadata"),
-            ("critical_thumbnail_progressive.jpg", "サムネイル埋め込みとプログレッシブの組み合わせ", "Embedded thumbnail with progressive format")
+            ("critical_thumbnail_progressive.jpg", "サムネイル埋め込みとプログレッシブの組み合わせ", "Embedded thumbnail with progressive format"),
+            ("critical_orientation_metadata.jpg", "回転orientation情報と複雑メタデータの組み合わせ", "Rotated orientation with complex metadata")
         ]
         
         _convert_jpeg_critical_combinations(source_file, output_dir)
@@ -508,14 +518,41 @@ def _convert_jpeg_thumbnail(source, output_dir, thumbnail):
     if thumbnail == "none":
         cmd = ["convert", source, "-strip", output_file]
     elif thumbnail == "embedded":
-        cmd = ["convert", source, "-thumbnail", "160x120", "-write", "mpr:thumb", "+delete",
-               source, "-profile", "!exif,*", "mpr:thumb", "-profile", "!exif,*", 
-               "-compose", "over", "-composite", output_file]
+        # Simplified approach - create a copy with embedded thumbnail
+        # Use PIL to create thumbnail in EXIF data
+        try:
+            from PIL import Image
+            import piexif
+            
+            with Image.open(source) as img:
+                # Create thumbnail
+                img.thumbnail((160, 120), Image.Resampling.LANCZOS)
+                
+                # Load existing EXIF or create new
+                try:
+                    exif_data = piexif.load(str(source))
+                except:
+                    exif_data = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+                
+                # Convert thumbnail to JPEG bytes
+                import io
+                thumb_buffer = io.BytesIO()
+                img.save(thumb_buffer, format='JPEG', quality=85)
+                exif_data["thumbnail"] = thumb_buffer.getvalue()
+                
+                # Save original image with embedded thumbnail
+                with Image.open(source) as orig_img:
+                    exif_bytes = piexif.dump(exif_data)
+                    orig_img.save(output_file, exif=exif_bytes)
+                    
+        except Exception as e:
+            print(f"PIL thumbnail embedding failed, using simple copy: {e}")
+            cmd = ["convert", source, output_file]
+            _run_imagemagick_command(cmd)
     else:
         # Fallback to simple copy
         cmd = ["convert", source, output_file]
-    
-    _run_imagemagick_command(cmd)
+        _run_imagemagick_command(cmd)
 
 
 def _convert_jpeg_quality(source, output_dir, quality):
@@ -564,12 +601,49 @@ def _convert_jpeg_icc(source, output_dir, icc):
     if icc == "none":
         cmd = ["convert", source, "+profile", "icc", output_file]
     elif icc == "srgb":
-        cmd = ["convert", source, "-profile", "sRGB", output_file]
+        # Set sRGB colorspace instead of trying to load profile file
+        cmd = ["convert", source, "-colorspace", "sRGB", output_file]
+    elif icc == "adobergb":
+        # Set Adobe RGB colorspace (ImageMagick uses "Adobe98")
+        cmd = ["convert", source, "-colorspace", "Adobe98", output_file]
     else:
-        # Default for adobergb or fallback
+        # Default fallback
         cmd = ["convert", source, output_file]
     
     _run_imagemagick_command(cmd)
+
+
+def _convert_jpeg_orientation(source, output_dir, orientation):
+    """Convert JPEG with different orientation settings."""
+    output_file = os.path.join(output_dir, f"orientation_{orientation}.jpg")
+    
+    # Use PIL with piexif to set EXIF orientation tag more reliably
+    try:
+        from PIL import Image
+        import piexif
+        
+        # Copy the source image first
+        with Image.open(source) as img:
+            # Load existing EXIF data or create new
+            try:
+                exif_data = piexif.load(str(source))
+            except:
+                exif_data = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            
+            # Set orientation tag
+            exif_data["0th"][piexif.ImageIFD.Orientation] = orientation
+            
+            # Convert back to bytes
+            exif_bytes = piexif.dump(exif_data)
+            
+            # Save with new EXIF orientation
+            img.save(output_file, exif=exif_bytes)
+            
+    except Exception as e:
+        print(f"PIL/piexif orientation setting failed, trying ImageMagick fallback: {e}")
+        # Fallback to simple copy with ImageMagick metadata
+        cmd = ["convert", source, "-define", f"exif:Orientation={orientation}", output_file]
+        _run_imagemagick_command(cmd)
 
 
 def _convert_jpeg_critical_combinations(source, output_dir):
@@ -588,6 +662,28 @@ def _convert_jpeg_critical_combinations(source, output_dir):
     output_file = os.path.join(output_dir, "critical_thumbnail_progressive.jpg")
     cmd = ["convert", source, "-interlace", "JPEG", output_file]
     _run_imagemagick_command(cmd)
+    
+    # Orientation + Metadata
+    output_file = os.path.join(output_dir, "critical_orientation_metadata.jpg")
+    try:
+        from PIL import Image
+        import piexif
+        
+        with Image.open(source) as img:
+            try:
+                exif_data = piexif.load(str(source))
+            except:
+                exif_data = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            
+            # Set orientation to 6 (90 degrees clockwise)
+            exif_data["0th"][piexif.ImageIFD.Orientation] = 6
+            exif_bytes = piexif.dump(exif_data)
+            img.save(output_file, exif=exif_bytes)
+            
+    except Exception as e:
+        print(f"PIL/piexif critical orientation failed, trying ImageMagick: {e}")
+        cmd = ["convert", source, "-define", "exif:Orientation=6", output_file]
+        _run_imagemagick_command(cmd)
 
 
 # PNG conversion functions
@@ -736,6 +832,10 @@ def _convert_png_critical_combinations(source, output_dir):
 def _run_imagemagick_command(cmd):
     """Run ImageMagick command with error handling."""
     try:
+        # Convert 'convert' to 'magick' for ImageMagick v7 compatibility
+        if cmd[0] == 'convert':
+            cmd[0] = 'magick'
+        
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True
     except subprocess.CalledProcessError as e:

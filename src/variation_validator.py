@@ -164,6 +164,12 @@ def validate_jpeg_variations(jpeg_dir):
         'metadata_basic_exif.jpg': {'has_exif': True, 'min_exif_tags': 1},
         'metadata_gps.jpg': {'has_exif': True, 'has_gps': True},
         'metadata_full_exif.jpg': {'has_exif': True, 'min_exif_tags': 10},
+        
+        # Orientation variations
+        'orientation_1.jpg': {'orientation': 1},
+        'orientation_3.jpg': {'orientation': 3},
+        'orientation_6.jpg': {'orientation': 6},
+        'orientation_8.jpg': {'orientation': 8},
     }
     
     for filename, specs in jpeg_specs.items():
@@ -298,6 +304,13 @@ def validate_jpeg_file(file_path, filename, expected_specs):
                         has_gps = bool(exif_data.get('GPS'))
                         expected_gps = expected_specs['has_gps']
                         result.add_test('has_gps', has_gps == expected_gps, expected_gps, has_gps)
+                    
+                    # Test orientation
+                    if 'orientation' in expected_specs:
+                        orientation_tag = exif_data.get('0th', {}).get(piexif.ImageIFD.Orientation)
+                        expected_orientation = expected_specs['orientation']
+                        result.add_test('orientation', orientation_tag == expected_orientation, 
+                                      expected_orientation, orientation_tag)
                         
                 except Exception as e:
                     if expected_specs['has_exif']:
