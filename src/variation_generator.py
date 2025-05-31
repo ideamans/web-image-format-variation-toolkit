@@ -958,12 +958,32 @@ def _convert_png_critical_combinations(source, output_dir):
     _run_imagemagick_command(cmd)
 
 
+# Global variable to cache detected ImageMagick command
+_imagemagick_cmd = None
+
 def _run_imagemagick_command(cmd):
     """Run ImageMagick command with error handling."""
+    global _imagemagick_cmd
+    
+    # Detect and cache ImageMagick command if not already done
+    if _imagemagick_cmd is None:
+        # Try both 'magick' and 'convert' commands
+        for test_cmd in ['magick', 'convert']:
+            try:
+                subprocess.run([test_cmd, '--version'], capture_output=True, check=True)
+                _imagemagick_cmd = test_cmd
+                print(f"Detected ImageMagick command: {_imagemagick_cmd}")
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                continue
+        
+        if _imagemagick_cmd is None:
+            print("ImageMagick not found. Please install ImageMagick.")
+            return False
+    
     try:
-        # Convert 'convert' to 'magick' for ImageMagick v7 compatibility
-        if cmd[0] == 'convert':
-            cmd[0] = 'magick'
+        # Replace command with detected ImageMagick command
+        cmd[0] = _imagemagick_cmd
         
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return True
