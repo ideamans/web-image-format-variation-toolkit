@@ -175,3 +175,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+test_output/
+test_a/
+test_b/
+test_comparison/

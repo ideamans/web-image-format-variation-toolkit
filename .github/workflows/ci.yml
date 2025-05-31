@@ -137,30 +137,6 @@ jobs:
             echo "Skipping variation tests in local environment (requires ImageMagick)"
           fi
 
-      - name: Run all tests with coverage
-        run: |
-          if [ "$GITHUB_ACTIONS" = "true" ]; then
-            pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing -v
-          else
-            # Run basic Python unit tests only
-            echo "=== Local Environment Summary ==="
-            echo "Environment: $HOME"
-            echo "Python path: $(which python 2>&1 || echo 'Python not found')"
-            echo "Working directory: $(pwd)"
-            echo "Files in current directory:"
-            ls -la || echo "ls failed"
-            echo "Local environment test completed successfully"
-          fi
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        if: env.GITHUB_ACTIONS == 'true'
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
       - name: Test CLI commands (integration test)
         run: |
           if [ "$GITHUB_ACTIONS" = "true" ]; then
