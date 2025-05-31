@@ -528,6 +528,7 @@ def _convert_jpeg_thumbnail(source, output_dir, thumbnail):
     
     if thumbnail == "none":
         cmd = ["convert", source, "-strip", output_file]
+        _run_imagemagick_command(cmd)
     elif thumbnail == "embedded":
         # Simplified approach - create a copy with embedded thumbnail
         # Use PIL to create thumbnail in EXIF data
@@ -612,11 +613,27 @@ def _convert_jpeg_icc(source, output_dir, icc):
     if icc == "none":
         cmd = ["convert", source, "+profile", "icc", output_file]
     elif icc == "srgb":
-        # Set sRGB colorspace instead of trying to load profile file
-        cmd = ["convert", source, "-colorspace", "sRGB", output_file]
+        # Use ImageMagick with embedded sRGB profile
+        cmd = ["convert", source, "-colorspace", "sRGB", "-strip", "+profile", "!icc,*", "-profile", "/System/Library/ColorSync/Profiles/sRGB Profile.icc", output_file]
+        if not _run_imagemagick_command(cmd):
+            # Fallback: try built-in sRGB profile
+            cmd = ["convert", source, "-colorspace", "sRGB", "-profile", "sRGB.icc", output_file]
+            if not _run_imagemagick_command(cmd):
+                # Final fallback: simple colorspace conversion
+                cmd = ["convert", source, "-colorspace", "sRGB", output_file]
+                _run_imagemagick_command(cmd)
+        return
     elif icc == "adobergb":
-        # Set Adobe RGB colorspace (ImageMagick uses "Adobe98")
-        cmd = ["convert", source, "-colorspace", "Adobe98", output_file]
+        # Use ImageMagick with Adobe RGB profile
+        cmd = ["convert", source, "-colorspace", "Adobe98", "-strip", "+profile", "!icc,*", "-profile", "/System/Library/ColorSync/Profiles/AdobeRGB1998.icc", output_file]
+        if not _run_imagemagick_command(cmd):
+            # Fallback: try built-in Adobe RGB
+            cmd = ["convert", source, "-colorspace", "Adobe98", "-profile", "AdobeRGB1998.icc", output_file]
+            if not _run_imagemagick_command(cmd):
+                # Final fallback: simple colorspace conversion
+                cmd = ["convert", source, "-colorspace", "Adobe98", output_file]
+                _run_imagemagick_command(cmd)
+        return
     else:
         # Default fallback
         cmd = ["convert", source, output_file]
