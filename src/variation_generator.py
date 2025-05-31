@@ -156,6 +156,13 @@ def generate_jpeg_variations(source_file, output_dir):
             (3, "orientation", "180度回転（Bottom-right）", "Rotated 180 degrees (Bottom-right)"),
             (6, "orientation", "時計回りに90度回転（Right-top）", "Rotated 90 degrees clockwise (Right-top)"),
             (8, "orientation", "反時計回りに90度回転（Left-bottom）", "Rotated 90 degrees counter-clockwise (Left-bottom)"),
+            
+            # DPI/Resolution variations
+            ("jfif_units0", "dpi", "JFIF units:0 (縦横比のみ)", "JFIF units:0 (aspect ratio only)"),
+            ("jfif_72dpi", "dpi", "JFIF units:1 72DPI", "JFIF units:1 72DPI"),
+            ("jfif_200dpi", "dpi", "JFIF units:1 200DPI", "JFIF units:1 200DPI"),
+            ("exif_72dpi", "dpi", "EXIF指定 72DPI", "EXIF specified 72DPI"),
+            ("exif_200dpi", "dpi", "EXIF指定 200DPI", "EXIF specified 200DPI"),
         ]
         
         # Generate variations
@@ -184,6 +191,9 @@ def generate_jpeg_variations(source_file, output_dir):
             elif category == "orientation":
                 _convert_jpeg_orientation(source_file, output_dir, param)
                 filename = f"orientation_{param}.jpg"
+            elif category == "dpi":
+                _convert_jpeg_dpi(source_file, output_dir, param)
+                filename = f"dpi_{param}.jpg"
             
             # Add to index
             variations_index.append({
@@ -198,7 +208,8 @@ def generate_jpeg_variations(source_file, output_dir):
             ("critical_cmyk_lowquality.jpg", "CMYK色空間と低品質の組み合わせ（高圧縮）", "CMYK color space with low quality (high compression)"),
             ("critical_progressive_fullmeta.jpg", "プログレッシブ形式と完全メタデータの組み合わせ", "Progressive format with complete metadata"),
             ("critical_thumbnail_progressive.jpg", "サムネイル埋め込みとプログレッシブの組み合わせ", "Embedded thumbnail with progressive format"),
-            ("critical_orientation_metadata.jpg", "回転orientation情報と複雑メタデータの組み合わせ", "Rotated orientation with complex metadata")
+            ("critical_orientation_metadata.jpg", "回転orientation情報と複雑メタデータの組み合わせ", "Rotated orientation with complex metadata"),
+            ("critical_jfif_exif_dpi.jpg", "JFIF units:1 72DPIとEXIF 200DPIの併存", "JFIF units:1 72DPI with EXIF 200DPI conflict")
         ]
         
         _convert_jpeg_critical_combinations(source_file, output_dir)
@@ -646,6 +657,81 @@ def _convert_jpeg_orientation(source, output_dir, orientation):
         _run_imagemagick_command(cmd)
 
 
+def _convert_jpeg_dpi(source, output_dir, dpi_type):
+    """Convert JPEG with different DPI/resolution specifications."""
+    output_file = os.path.join(output_dir, f"dpi_{dpi_type}.jpg")
+    
+    try:
+        from PIL import Image
+        import piexif
+        
+        with Image.open(source) as img:
+            # Load existing EXIF data or create new
+            try:
+                exif_data = piexif.load(str(source))
+            except:
+                exif_data = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            
+            if dpi_type == "jfif_units0":
+                # JFIF units:0 (aspect ratio only, no absolute DPI)
+                # Remove resolution info from EXIF and set JFIF to units=0
+                exif_data["0th"].pop(piexif.ImageIFD.XResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.YResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
+                
+                exif_bytes = piexif.dump(exif_data)
+                img.save(output_file, exif=exif_bytes, dpi=(1, 1))  # PIL sets JFIF units=0 for 1:1
+                
+            elif dpi_type == "jfif_72dpi":
+                # JFIF units:1 with 72 DPI
+                exif_data["0th"].pop(piexif.ImageIFD.XResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.YResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
+                
+                exif_bytes = piexif.dump(exif_data)
+                img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+                
+            elif dpi_type == "jfif_200dpi":
+                # JFIF units:1 with 200 DPI
+                exif_data["0th"].pop(piexif.ImageIFD.XResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.YResolution, None)
+                exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
+                
+                exif_bytes = piexif.dump(exif_data)
+                img.save(output_file, exif=exif_bytes, dpi=(200, 200))
+                
+            elif dpi_type == "exif_72dpi":
+                # EXIF specified 72 DPI (no JFIF resolution)
+                exif_data["0th"][piexif.ImageIFD.XResolution] = (72, 1)
+                exif_data["0th"][piexif.ImageIFD.YResolution] = (72, 1)
+                exif_data["0th"][piexif.ImageIFD.ResolutionUnit] = 2  # inches
+                
+                exif_bytes = piexif.dump(exif_data)
+                # Save without DPI parameter to avoid JFIF resolution
+                img.save(output_file, exif=exif_bytes)
+                
+            elif dpi_type == "exif_200dpi":
+                # EXIF specified 200 DPI (no JFIF resolution)
+                exif_data["0th"][piexif.ImageIFD.XResolution] = (200, 1)
+                exif_data["0th"][piexif.ImageIFD.YResolution] = (200, 1)
+                exif_data["0th"][piexif.ImageIFD.ResolutionUnit] = 2  # inches
+                
+                exif_bytes = piexif.dump(exif_data)
+                # Save without DPI parameter to avoid JFIF resolution
+                img.save(output_file, exif=exif_bytes)
+            
+    except Exception as e:
+        print(f"PIL/piexif DPI setting failed, using ImageMagick fallback: {e}")
+        # Fallback to ImageMagick
+        if dpi_type == "jfif_72dpi":
+            cmd = ["convert", source, "-density", "72x72", "-units", "PixelsPerInch", output_file]
+        elif dpi_type == "jfif_200dpi":
+            cmd = ["convert", source, "-density", "200x200", "-units", "PixelsPerInch", output_file]
+        else:
+            cmd = ["convert", source, output_file]
+        _run_imagemagick_command(cmd)
+
+
 def _convert_jpeg_critical_combinations(source, output_dir):
     """Generate critical JPEG combinations."""
     # CMYK + Low Quality
@@ -683,6 +769,32 @@ def _convert_jpeg_critical_combinations(source, output_dir):
     except Exception as e:
         print(f"PIL/piexif critical orientation failed, trying ImageMagick: {e}")
         cmd = ["convert", source, "-define", "exif:Orientation=6", output_file]
+        _run_imagemagick_command(cmd)
+    
+    # JFIF 72DPI + EXIF 200DPI conflict
+    output_file = os.path.join(output_dir, "critical_jfif_exif_dpi.jpg")
+    try:
+        from PIL import Image
+        import piexif
+        
+        with Image.open(source) as img:
+            try:
+                exif_data = piexif.load(str(source))
+            except:
+                exif_data = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+            
+            # Set EXIF resolution to 200 DPI
+            exif_data["0th"][piexif.ImageIFD.XResolution] = (200, 1)
+            exif_data["0th"][piexif.ImageIFD.YResolution] = (200, 1)
+            exif_data["0th"][piexif.ImageIFD.ResolutionUnit] = 2  # inches
+            
+            exif_bytes = piexif.dump(exif_data)
+            # Save with JFIF 72 DPI (conflicts with EXIF 200 DPI)
+            img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+            
+    except Exception as e:
+        print(f"PIL/piexif critical DPI conflict failed, trying ImageMagick: {e}")
+        cmd = ["convert", source, "-density", "72x72", "-units", "PixelsPerInch", output_file]
         _run_imagemagick_command(cmd)
 
 

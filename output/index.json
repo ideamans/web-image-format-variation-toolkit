@@ -169,6 +169,36 @@
   },
   {
     "format": "jpeg",
+    "path": "jpeg/dpi_jfif_units0.jpg",
+    "jp": "JFIF units:0 (縦横比のみ)",
+    "en": "JFIF units:0 (aspect ratio only)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/dpi_jfif_72dpi.jpg",
+    "jp": "JFIF units:1 72DPI",
+    "en": "JFIF units:1 72DPI"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/dpi_jfif_200dpi.jpg",
+    "jp": "JFIF units:1 200DPI",
+    "en": "JFIF units:1 200DPI"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/dpi_exif_72dpi.jpg",
+    "jp": "EXIF指定 72DPI",
+    "en": "EXIF specified 72DPI"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/dpi_exif_200dpi.jpg",
+    "jp": "EXIF指定 200DPI",
+    "en": "EXIF specified 200DPI"
+  },
+  {
+    "format": "jpeg",
     "path": "jpeg/critical_cmyk_lowquality.jpg",
     "jp": "CMYK色空間と低品質の組み合わせ（高圧縮）",
     "en": "CMYK color space with low quality (high compression)"
@@ -190,6 +220,12 @@
     "path": "jpeg/critical_orientation_metadata.jpg",
     "jp": "回転orientation情報と複雑メタデータの組み合わせ",
     "en": "Rotated orientation with complex metadata"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_jfif_exif_dpi.jpg",
+    "jp": "JFIF units:1 72DPIとEXIF 200DPIの併存",
+    "en": "JFIF units:1 72DPI with EXIF 200DPI conflict"
   },
   {
     "format": "png",
