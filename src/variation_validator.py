@@ -242,6 +242,20 @@ def validate_png_variations(png_dir):
         # Metadata variations
         'metadata_none.png': {'has_text_chunks': False},
         'metadata_text.png': {'has_text_chunks': True},
+        'metadata_compressed.png': {'has_text_chunks': True},
+        'metadata_international.png': {'has_text_chunks': True},
+        
+        # Filter variations
+        'filter_none.png': {'filter_type': 'none'},
+        'filter_sub.png': {'filter_type': 'sub'},
+        'filter_up.png': {'filter_type': 'up'},
+        'filter_average.png': {'filter_type': 'average'},
+        'filter_paeth.png': {'filter_type': 'paeth'},
+        
+        # Auxiliary chunk variations
+        'chunk_gamma.png': {'has_gamma_chunk': True},
+        'chunk_background.png': {'has_background_chunk': True},
+        'chunk_transparency.png': {'has_transparency_chunk': True},
     }
     
     for filename, specs in png_specs.items():

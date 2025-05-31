@@ -203,6 +203,21 @@ Create an animated sequence containing:
 - `jpeg/icc_srgb.jpg` - Standard sRGB color profile
 - `jpeg/icc_adobergb.jpg` - Adobe RGB wide gamut profile
 
+**EXIF Orientation Individual**
+
+- `jpeg/orientation_1.jpg` - Normal orientation (Top-left), standard view
+- `jpeg/orientation_3.jpg` - Rotated 180 degrees (Bottom-right), upside down
+- `jpeg/orientation_6.jpg` - Rotated 90 degrees clockwise (Right-top), portrait to landscape
+- `jpeg/orientation_8.jpg` - Rotated 90 degrees counter-clockwise (Left-bottom), landscape to portrait
+
+**DPI/Resolution Individual**
+
+- `jpeg/dpi_jfif_units0.jpg` - JFIF units:0 (aspect ratio only, no absolute DPI)
+- `jpeg/dpi_jfif_72dpi.jpg` - JFIF units:1 with 72 DPI (web standard)
+- `jpeg/dpi_jfif_200dpi.jpg` - JFIF units:1 with 200 DPI (print quality)
+- `jpeg/dpi_exif_72dpi.jpg` - EXIF specified 72 DPI (no JFIF resolution)
+- `jpeg/dpi_exif_200dpi.jpg` - EXIF specified 200 DPI (no JFIF resolution)
+
 #### Critical Combinations
 
 **CMYK + High Compression**
@@ -220,6 +235,10 @@ Create an animated sequence containing:
 **Orientation + Metadata**
 
 - `jpeg/critical_orientation_metadata.jpg` - Rotated orientation with complex metadata, potential processing conflicts
+
+**JFIF + EXIF DPI Conflict**
+
+- `jpeg/critical_jfif_exif_dpi.jpg` - JFIF units:1 72 DPI with EXIF 200 DPI, conflicting resolution specifications
 
 ### PNG Variations
 
@@ -417,20 +436,22 @@ python toolkit.py generate-variations [--source-dir SOURCE] [--output-dir OUTPUT
 
 ```
 output/
-├── index.json              # Machine-readable metadata (84 entries)
-├── test_original.jpg       # JPEG source image (2000x1500)
-├── test_original.png       # PNG source image (1500x1500)
+├── index.json              # Machine-readable metadata (90 entries)
+├── test_original.jpg       # JPEG source image (640x480)
+├── test_original.png       # PNG source image (480x480)
 ├── test_original.gif       # GIF source animation (200x200, 10 frames)
-├── jpeg/                   # 29 JPEG variations
+├── jpeg/                   # 34 JPEG variations (29 + 5 critical)
 │   ├── colorspace_rgb.jpg
 │   ├── quality_80.jpg
+│   ├── orientation_6.jpg
+│   ├── dpi_jfif_72dpi.jpg
 │   └── ...
-├── png/                    # 32 PNG variations
+├── png/                    # 32 PNG variations (26 + 4 critical)
 │   ├── colortype_rgba.png
 │   ├── depth_16bit.png
 │   └── ...
-└── gif/                    # 20 GIF variations
-    ├── fast_25fps.gif
+└── gif/                    # 21 GIF variations (18 + 3 critical)
+    ├── fps_fast.gif
     ├── palette_2colors.gif
     └── ...
 ```
@@ -447,16 +468,27 @@ python toolkit.py compare-directories DIR_A DIR_B [--output-format {table,json,c
 - Report files present in A but not B, and vice versa
 - Support multiple output formats for integration
 
-### Command 4: Variation Validation
+### Command 4: Testing and Validation (pytest-based)
 
 ```bash
-python toolkit.py validate-variations [--output-dir OUTPUT] [--report-file FILE]
+# Run all tests
+pytest
+
+# Test original image generation
+pytest tests/test_original_generation.py
+
+# Test variation generation and validation
+pytest tests/test_variation_generation.py
+
+# Run with coverage
+pytest --cov=src --cov-report=term-missing
 ```
 
-- Validate that generated variations meet their specified requirements
-- Use ImageMagick `identify` command for accurate property detection
-- Generate comprehensive validation reports in JSON or text format
-- **Achieve 100% specification compliance verification**
+- **pytest-based test suite** for comprehensive validation
+- Automated CI/CD integration with GitHub Actions  
+- Test original image generation compliance
+- Test variation generation and specification adherence
+- **100% specification compliance verification through tests**
 
 ## Quality Validation Requirements
 
@@ -633,14 +665,34 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 
 - **16-bit PNG Generation**: OpenCV-based true 16-bit depth creation with sub-pixel noise
 - **Accurate Property Detection**: ImageMagick `identify` command integration
-- **100% Compliance Achievement**: All 84 variations pass specification requirements
+- **100% Compliance Achievement**: All 87 variations pass specification requirements
 - **Bilingual Documentation**: Japanese and English descriptions for international use
+
+### Testing and CI/CD Integration
+
+- **pytest-based Test Suite**: Comprehensive test coverage for all functionality
+- **GitHub Actions CI**: Automated testing on push/PR events using Python 3.12
+- **Dependency Management**: Automated system dependency installation (ImageMagick, etc.)
+- **Coverage Reporting**: Test coverage tracking and reporting
+- **Integration Testing**: End-to-end CLI command validation
+
+**Test Categories:**
+- **Original Image Generation Tests**: Specification compliance verification
+- **Variation Generation Tests**: All format variations and index.json generation
+- **Validation Tests**: Converted from `validate-variations` subcommand to pytest
+- **Property Verification Tests**: Image format, resolution, metadata validation
+
+**GitHub Workflow Debugging:**
+- **Local debugging**: Use `wrkflw run -v .github/workflows/ci.yml` to debug workflow locally
+- **Comprehensive CI**: Includes environment setup, dependency installation, test execution, and artifact archiving
+- **Coverage Integration**: Automated coverage reporting with Codecov
 
 ### Automation and Workflow Integration
 
 - **Machine-readable index**: JSON format for automated pipeline integration
-- **Comprehensive validation**: Zero-failure specification compliance
+- **Comprehensive validation**: Zero-failure specification compliance through tests
 - **Multi-format reporting**: JSON, CSV, and tabular outputs for different use cases
 - **Command-line interface**: Full automation support with detailed progress reporting
+- **Continuous Integration**: Automated quality assurance on code changes
 
-This comprehensive specification provides the foundation for developing a robust image processing toolkit that addresses all identified requirements for JPEG, PNG, and GIF format variation testing, with enhanced validation capabilities, animation support, and automation features.
+This comprehensive specification provides the foundation for developing a robust image processing toolkit that addresses all identified requirements for JPEG, PNG, and GIF format variation testing, with enhanced validation capabilities, animation support, automated testing, and CI/CD integration.

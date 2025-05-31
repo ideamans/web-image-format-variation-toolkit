@@ -10,6 +10,8 @@ JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、�
 - [基本的な使い方](#基本的な使い方)
 - [詳細な使用方法](#詳細な使用方法)
 - [生成される画像バリエーション](#生成される画像バリエーション)
+- [テスト実行方法](#テスト実行方法)
+- [CI/CD](#cicd)
 - [開発者向け情報](#開発者向け情報)
 - [ライセンス](#ライセンス)
 
@@ -35,15 +37,15 @@ JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、�
 ### 🔧 主要機能
 
 1. **元画像生成**: JPEG・PNG・GIF形式の理想的なテスト画像を生成
-2. **バリエーション作成**: 81種類の異なる形式バリエーションを自動生成
+2. **バリエーション作成**: 87種類の異なる形式バリエーションを自動生成
 3. **画像比較**: ディレクトリ間での画像品質比較（PSNR・SSIM計算、GIFアニメーション対応）
 4. **仕様適合性検証**: 生成画像が期待する仕様を満たすかの自動検証
 
 ### 📊 対応形式
 
-- **JPEG**: 29種類のバリエーション（色空間、品質、エンコーディング、メタデータ、Exif Orientation等）
+- **JPEG**: 34種類のバリエーション（色空間、品質、エンコーディング、メタデータ、Exif Orientation、DPI解像度等）
 - **PNG**: 32種類のバリエーション（色タイプ、ビット深度、透明度、圧縮等）
-- **GIF**: 20種類のバリエーション（フレーム数、フレームレート、パレット、ディザリング等）
+- **GIF**: 21種類のバリエーション（フレーム数、フレームレート、パレット、ディザリング等）
 
 ## 🛠️ セットアップ
 
@@ -186,15 +188,23 @@ python toolkit.py compare-directories DIR_A DIR_B [オプション]
 - `--output-format {table,json,csv}`: 出力形式（デフォルト: table）
 - `--output-file FILE`: 結果をファイルに保存
 
-#### `validate-variations` - 仕様適合性検証
+#### 仕様適合性検証 - pytest テスト
 
 ```bash
-python toolkit.py validate-variations [オプション]
+# 全テストの実行
+pytest
+
+# 元画像生成テスト
+pytest tests/test_original_generation.py
+
+# バリエーション生成・検証テスト
+pytest tests/test_variation_generation.py
 ```
 
-**オプション:**
-- `--output-dir DIR`: 検証対象ディレクトリ（デフォルト: output）
-- `--report-file FILE`: 検証レポートをファイルに保存
+**特徴:**
+- pytestベースの包括的テストスイート
+- GitHub Actions CI/CD統合
+- 自動化された仕様適合性検証
 
 ### 実用的な使用例
 
@@ -231,7 +241,7 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 
 ## 📋 生成される画像バリエーション
 
-### JPEG バリエーション (29種類)
+### JPEG バリエーション (34種類)
 
 | カテゴリ | ファイル名 | 説明 |
 |----------|------------|------|
@@ -260,10 +270,16 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `orientation_3.jpg` | 180度回転（Bottom-right） |
 | | `orientation_6.jpg` | 時計回りに90度回転 |
 | | `orientation_8.jpg` | 反時計回りに90度回転 |
+| **DPI/解像度** | `dpi_jfif_units0.jpg` | JFIF units:0（縦横比のみ） |
+| | `dpi_jfif_72dpi.jpg` | JFIF 72 DPI（Web標準） |
+| | `dpi_jfif_200dpi.jpg` | JFIF 200 DPI（印刷品質） |
+| | `dpi_exif_72dpi.jpg` | EXIF指定 72 DPI |
+| | `dpi_exif_200dpi.jpg` | EXIF指定 200 DPI |
 | **複合パターン** | `critical_cmyk_lowquality.jpg` | CMYK + 低品質 |
 | | `critical_progressive_fullmeta.jpg` | プログレッシブ + 完全メタデータ |
 | | `critical_thumbnail_progressive.jpg` | サムネイル + プログレッシブ |
 | | `critical_orientation_metadata.jpg` | Orientation + 複雑メタデータ |
+| | `critical_jfif_exif_dpi.jpg` | JFIF 72 DPI + EXIF 200 DPI競合 |
 
 ### PNG バリエーション (32種類)
 
@@ -302,7 +318,7 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `critical_maxcompression_paeth.png` | 最大圧縮 + Paethフィルター |
 | | `critical_interlace_highres.png` | インターレース + 高解像度 |
 
-### GIF バリエーション (20種類)
+### GIF バリエーション (21種類)
 
 | カテゴリ | ファイル名 | 説明 |
 |----------|------------|------|
@@ -484,6 +500,112 @@ pip install -r requirements.txt
 ### 課題・要望
 
 GitHub Issuesで課題報告や機能要望をお願いします。
+
+## 🧪 テスト実行方法
+
+このプロジェクトはpytestを使用した包括的なテストスイートを提供しています。
+
+### 基本的なテスト実行
+
+```bash
+# 全テストの実行
+pytest
+
+# 詳細な出力付きで実行
+pytest -v
+
+# カバレッジ付きで実行
+pytest --cov=src --cov-report=term-missing
+```
+
+### 個別テストの実行
+
+```bash
+# 元画像生成のテスト
+pytest tests/test_original_generation.py
+
+# バリエーション生成のテスト  
+pytest tests/test_variation_generation.py
+
+# 特定のテストケース
+pytest tests/test_original_generation.py::TestOriginalGeneration::test_jpeg_original_specifications
+```
+
+### Makefileを使用したテスト
+
+```bash
+# 依存関係の確認
+make check-deps
+
+# 全テストの実行
+make test
+
+# カバレッジ付きテスト
+make test-all
+
+# 統合テスト
+make integration-test
+
+# 開発環境のセットアップとテスト
+make dev-setup
+make dev-test
+```
+
+### テストの種類
+
+1. **元画像生成テスト** (`test_original_generation.py`)
+   - JPEG/PNG/GIF元画像の生成確認
+   - 画像仕様の適合性検証
+   - ファイルサイズとメタデータの検証
+
+2. **バリエーション生成テスト** (`test_variation_generation.py`) 
+   - 全バリエーション画像の生成確認
+   - index.jsonファイルの生成検証
+   - バリエーション数の確認
+
+3. **バリデーションテスト** (旧`validate-variations`の変換)
+   - 各バリエーションの仕様適合性検証
+   - 画像プロパティの検証
+   - 失敗ケースの検出
+
+### CI環境でのテスト
+
+GitHub Actionsでは以下のマトリックスでテストを実行：
+
+- **Python バージョン**: 3.9, 3.10, 3.11
+- **OS**: Ubuntu (Linux)
+- **依存関係**: ImageMagick, 画像処理ライブラリ
+
+## 🔄 CI/CD
+
+### GitHub Actions
+
+プッシュとプルリクエストで自動的にテストが実行されます：
+
+```yaml
+# .github/workflows/ci.yml
+- 依存関係のインストール (ImageMagick等)
+- Python環境のセットアップ (3.9, 3.10, 3.11)
+- 全テストの実行
+- カバレッジレポートの生成
+- 統合テストの実行
+```
+
+### ローカル開発
+
+```bash
+# 開発環境のセットアップ
+make dev-setup
+
+# コードフォーマット
+make format
+
+# リント実行
+make lint
+
+# 全テスト + 統合テスト
+make dev-test
+```
 
 ## 📄 ライセンス
 
