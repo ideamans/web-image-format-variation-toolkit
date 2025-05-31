@@ -145,6 +145,30 @@
   },
   {
     "format": "jpeg",
+    "path": "jpeg/orientation_1.jpg",
+    "jp": "通常の向き（Top-left）",
+    "en": "Normal orientation (Top-left)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/orientation_3.jpg",
+    "jp": "180度回転（Bottom-right）",
+    "en": "Rotated 180 degrees (Bottom-right)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/orientation_6.jpg",
+    "jp": "時計回りに90度回転（Right-top）",
+    "en": "Rotated 90 degrees clockwise (Right-top)"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/orientation_8.jpg",
+    "jp": "反時計回りに90度回転（Left-bottom）",
+    "en": "Rotated 90 degrees counter-clockwise (Left-bottom)"
+  },
+  {
+    "format": "jpeg",
     "path": "jpeg/critical_cmyk_lowquality.jpg",
     "jp": "CMYK色空間と低品質の組み合わせ（高圧縮）",
     "en": "CMYK color space with low quality (high compression)"
@@ -160,6 +184,12 @@
     "path": "jpeg/critical_thumbnail_progressive.jpg",
     "jp": "サムネイル埋め込みとプログレッシブの組み合わせ",
     "en": "Embedded thumbnail with progressive format"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_orientation_metadata.jpg",
+    "jp": "回転orientation情報と複雑メタデータの組み合わせ",
+    "en": "Rotated orientation with complex metadata"
   },
   {
     "format": "png",

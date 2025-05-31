@@ -35,13 +35,13 @@ JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、�
 ### 🔧 主要機能
 
 1. **元画像生成**: JPEG・PNG・GIF形式の理想的なテスト画像を生成
-2. **バリエーション作成**: 76種類の異なる形式バリエーションを自動生成
+2. **バリエーション作成**: 81種類の異なる形式バリエーションを自動生成
 3. **画像比較**: ディレクトリ間での画像品質比較（PSNR・SSIM計算、GIFアニメーション対応）
 4. **仕様適合性検証**: 生成画像が期待する仕様を満たすかの自動検証
 
 ### 📊 対応形式
 
-- **JPEG**: 24種類のバリエーション（色空間、品質、エンコーディング、メタデータ等）
+- **JPEG**: 29種類のバリエーション（色空間、品質、エンコーディング、メタデータ、Exif Orientation等）
 - **PNG**: 32種類のバリエーション（色タイプ、ビット深度、透明度、圧縮等）
 - **GIF**: 20種類のバリエーション（フレーム数、フレームレート、パレット、ディザリング等）
 
@@ -123,10 +123,10 @@ python toolkit.py generate-variations --test-compliance
 ```
 
 **実行結果:**
-- `output/jpeg/` - 24種類のJPEGバリエーション
+- `output/jpeg/` - 29種類のJPEGバリエーション
 - `output/png/` - 32種類のPNGバリエーション
 - `output/gif/` - 20種類のGIFバリエーション
-- `output/index.json` - 機械可読なメタデータファイル（79項目）
+- `output/index.json` - 機械可読なメタデータファイル（84項目）
 
 ### ステップ3: 画像の比較
 
@@ -231,7 +231,7 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 
 ## 📋 生成される画像バリエーション
 
-### JPEG バリエーション (24種類)
+### JPEG バリエーション (29種類)
 
 | カテゴリ | ファイル名 | 説明 |
 |----------|------------|------|
@@ -256,9 +256,14 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `icc_adobergb.jpg` | Adobe RGBプロファイル |
 | **サムネイル** | `thumbnail_none.jpg` | サムネイルなし |
 | | `thumbnail_embedded.jpg` | 埋め込みサムネイル |
+| **Exif Orientation** | `orientation_1.jpg` | 通常の向き（Top-left） |
+| | `orientation_3.jpg` | 180度回転（Bottom-right） |
+| | `orientation_6.jpg` | 時計回りに90度回転 |
+| | `orientation_8.jpg` | 反時計回りに90度回転 |
 | **複合パターン** | `critical_cmyk_lowquality.jpg` | CMYK + 低品質 |
 | | `critical_progressive_fullmeta.jpg` | プログレッシブ + 完全メタデータ |
 | | `critical_thumbnail_progressive.jpg` | サムネイル + プログレッシブ |
+| | `critical_orientation_metadata.jpg` | Orientation + 複雑メタデータ |
 
 ### PNG バリエーション (32種類)
 
