@@ -55,29 +55,37 @@ def create_jpeg_test_image(width=640, height=480):
         [255, 150, 200]   # Pink
     ]
     
-    for _ in range(1000):
+    # Scale flower count and size based on image area
+    flower_count = max(200, (width * height) // 300)  # Density-based count
+    flower_radius = max(1, min(width, height) // 160)  # Adaptive size
+    
+    for _ in range(flower_count):
         x = np.random.randint(0, width)
         y = np.random.randint(height//2, height)
         color = flower_colors[np.random.randint(0, len(flower_colors))]
         
-        for dx in range(-2, 3):
-            for dy in range(-2, 3):
+        for dx in range(-flower_radius, flower_radius + 1):
+            for dy in range(-flower_radius, flower_radius + 1):
                 if (0 <= x+dx < width and 
                     0 <= y+dy < height and 
-                    dx*dx + dy*dy <= 4):
+                    dx*dx + dy*dy <= flower_radius*flower_radius):
                     img[y+dy, x+dx] = color
     
     # 4. Cloud layer (soft white regions)
     cloud_layer = np.zeros((height, width))
     
+    # Scale cloud parameters based on image size
+    cloud_radius = max(50, min(width, height) // 8)  # Adaptive cloud size
+    cloud_margin = cloud_radius
+    
     for i in range(5):
-        cx = np.random.randint(100, width-100)
+        cx = np.random.randint(cloud_margin, width - cloud_margin)
         cy = np.random.randint(0, height//4)
         
         x_coords = np.arange(width)[None, :]
         y_coords = np.arange(height)[:, None]
         
-        cloud = np.exp(-((x_coords - cx)**2 + (y_coords - cy)**2) / (100**2))
+        cloud = np.exp(-((x_coords - cx)**2 + (y_coords - cy)**2) / (cloud_radius**2))
         cloud_layer += cloud * 0.3
     
     cloud_layer = np.clip(cloud_layer, 0, 1)
@@ -88,9 +96,13 @@ def create_jpeg_test_image(width=640, height=480):
     person_x, person_y = width//4, height//2
     skin_color = [220, 180, 140]
     
-    for dx in range(-30, 31):
-        for dy in range(-40, 41):
-            if (dx*dx)/(30*30) + (dy*dy)/(40*40) <= 1:
+    # Scale person size based on image dimensions
+    person_width = max(15, width // 20)  # Adaptive width
+    person_height = max(20, height // 12)  # Adaptive height
+    
+    for dx in range(-person_width, person_width + 1):
+        for dy in range(-person_height, person_height + 1):
+            if (dx*dx)/(person_width*person_width) + (dy*dy)/(person_height*person_height) <= 1:
                 if (0 <= person_x+dx < width and 
                     0 <= person_y+dy < height):
                     img[person_y+dy, person_x+dx] = skin_color
@@ -122,50 +134,72 @@ def create_png_test_image(width=480, height=480):
             rgb = hsv_to_rgb(hue, 0.8, 0.9)
             pixels[x, y] = (*rgb, alpha)
     
-    # 2. Geometric shapes (opaque regions)
-    draw.ellipse([200, 200, 400, 400], 
+    # 2. Geometric shapes (opaque regions) - scaled to image size
+    shape_size = min(width, height) // 4  # Adaptive shape size
+    stroke_width = max(1, min(width, height) // 160)  # Adaptive stroke
+    
+    # Circle - positioned at 1/3 width, 1/3 height
+    circle_x = width // 3
+    circle_y = height // 3
+    draw.ellipse([circle_x - shape_size//2, circle_y - shape_size//2, 
+                  circle_x + shape_size//2, circle_y + shape_size//2], 
                 fill=(255, 100, 100, 255),
                 outline=(150, 50, 50, 255),
-                width=3)
+                width=stroke_width)
     
-    draw.rectangle([600, 200, 800, 400], 
+    # Rectangle - positioned at 2/3 width, 1/3 height
+    rect_x = (width * 2) // 3
+    rect_y = height // 3
+    draw.rectangle([rect_x - shape_size//2, rect_y - shape_size//2,
+                    rect_x + shape_size//2, rect_y + shape_size//2], 
                   fill=(100, 255, 100, 255),
                   outline=(50, 150, 50, 255),
-                  width=3)
+                  width=stroke_width)
     
-    triangle_points = [(1000, 200), (1100, 400), (900, 400)]
+    # Triangle - positioned at 1/2 width, 2/3 height
+    tri_x = width // 2
+    tri_y = (height * 2) // 3
+    triangle_points = [(tri_x, tri_y - shape_size//2), 
+                      (tri_x + shape_size//2, tri_y + shape_size//2), 
+                      (tri_x - shape_size//2, tri_y + shape_size//2)]
     draw.polygon(triangle_points, 
                 fill=(100, 100, 255, 255),
                 outline=(50, 50, 150, 255))
     
-    # 3. Semi-transparent gradient effect
-    center_x, center_y = 750, 750
-    for radius in range(100, 0, -5):
-        alpha = int(255 * (radius / 100) * 0.3)
+    # 3. Semi-transparent gradient effect - centered and scaled
+    center_x, center_y = width // 2, height // 2
+    max_radius = min(width, height) // 6  # Adaptive radius
+    radius_step = max(2, max_radius // 20)  # Adaptive step size
+    
+    for radius in range(max_radius, 0, -radius_step):
+        alpha = int(255 * (radius / max_radius) * 0.3)
         draw.ellipse([center_x - radius, center_y - radius,
                      center_x + radius, center_y + radius], 
                     fill=(255, 255, 0, alpha))
     
-    # 4. Text elements
+    # 4. Text elements - scaled font and positioned
+    font_large_size = max(12, min(width, height) // 12)  # Adaptive font size
+    font_medium_size = max(8, font_large_size * 2 // 3)  # Proportional medium font
+    
     try:
-        font_large = ImageFont.truetype("arial.ttf", 60)
-        font_medium = ImageFont.truetype("arial.ttf", 40)
+        font_large = ImageFont.truetype("arial.ttf", font_large_size)
+        font_medium = ImageFont.truetype("arial.ttf", font_medium_size)
     except (OSError, IOError):
         font_large = ImageFont.load_default()
         font_medium = ImageFont.load_default()
     
     text = "Test テスト 测试"
-    text_x, text_y = 100, 600
+    text_x, text_y = width // 20, height - height // 4  # Positioned relative to image size
     
     draw.text((text_x + 2, text_y + 2), text, 
              fill=(0, 0, 0, 180), font=font_large)
     draw.text((text_x, text_y), text, 
              fill=(255, 255, 255, 220), font=font_large)
-    draw.text((text_x, text_y + 80), "PNG Alpha Test Image", 
+    draw.text((text_x, text_y + font_large_size + 10), "PNG Alpha Test Image", 
              fill=(200, 200, 200, 200), font=font_medium)
     
-    # 5. Complex transparency pattern
-    checker_size = 50
+    # 5. Complex transparency pattern - scaled checker size
+    checker_size = max(10, min(width, height) // 12)  # Adaptive checker size
     alpha_levels = [0, 128, 255]
     
     for x in range(0, width, checker_size):
@@ -183,9 +217,9 @@ def create_png_test_image(width=480, height=480):
             draw.rectangle([x, y, x + checker_size, y + checker_size], 
                           fill=(red, green, blue, alpha))
     
-    # 6. Fine detail noise pattern
+    # 6. Fine detail noise pattern - scaled noise count
     pixels = img.load()
-    noise_count = 10000
+    noise_count = max(1000, (width * height) // 25)  # Density-based noise count
     
     for _ in range(noise_count):
         x = np.random.randint(0, width)
@@ -203,20 +237,34 @@ def create_png_test_image(width=480, height=480):
                 a
             )
     
-    # 7. Anti-aliased curved elements
-    draw.arc([50, 50, 200, 200], start=0, end=180, 
-            fill=(255, 0, 255, 200), width=8)
+    # 7. Anti-aliased curved elements - scaled and positioned
+    arc_size = min(width, height) // 4  # Adaptive arc size
+    arc_margin = width // 20
+    arc_stroke = max(2, min(width, height) // 80)  # Adaptive stroke width
     
+    draw.arc([arc_margin, arc_margin, arc_margin + arc_size, arc_margin + arc_size], 
+            start=0, end=180, fill=(255, 0, 255, 200), width=arc_stroke)
+    
+    # Curved line - positioned and scaled
     curve_points = []
-    for i in range(100):
-        t = i / 99.0
-        x = int(300 + 200 * t + 50 * np.sin(t * 6.28))
-        y = int(1200 + 100 * np.sin(t * 3.14))
+    curve_length = min(width, height) // 3
+    curve_amplitude = curve_length // 4
+    curve_start_x = width // 4
+    curve_start_y = height - height // 4
+    
+    for i in range(50):  # Reduced points for smaller images
+        t = i / 49.0
+        x = int(curve_start_x + curve_length * t + curve_amplitude * np.sin(t * 6.28))
+        y = int(curve_start_y + curve_amplitude * np.sin(t * 3.14))
+        # Keep points within bounds
+        x = max(0, min(width - 1, x))
+        y = max(0, min(height - 1, y))
         curve_points.append((x, y))
     
+    curve_stroke = max(1, min(width, height) // 120)  # Adaptive curve stroke
     for i in range(len(curve_points) - 1):
         draw.line([curve_points[i], curve_points[i + 1]], 
-                 fill=(0, 255, 255, 180), width=4)
+                 fill=(0, 255, 255, 180), width=curve_stroke)
     
     return img
 
