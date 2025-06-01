@@ -555,7 +555,7 @@ def _convert_jpeg_thumbnail(source, output_dir, thumbnail):
                 # Save original image with embedded thumbnail
                 with Image.open(source) as orig_img:
                     exif_bytes = piexif.dump(exif_data)
-                    orig_img.save(output_file, exif=exif_bytes)
+                    orig_img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
                     
         except Exception as e:
             print(f"PIL thumbnail embedding failed, using simple copy: {e}")
@@ -693,7 +693,7 @@ def _convert_jpeg_orientation(source, output_dir, orientation):
             exif_bytes = piexif.dump(exif_data)
             
             # Save with new EXIF orientation
-            img.save(output_file, exif=exif_bytes)
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif orientation setting failed, trying ImageMagick fallback: {e}")
@@ -725,7 +725,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(1, 1))  # PIL sets JFIF units=0 for 1:1
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(1, 1))  # PIL sets JFIF units=0 for 1:1
                 
             elif dpi_type == "jfif_72dpi":
                 # JFIF units:1 with 72 DPI
@@ -734,7 +734,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(72, 72))
                 
             elif dpi_type == "jfif_200dpi":
                 # JFIF units:1 with 200 DPI
@@ -743,7 +743,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(200, 200))
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(200, 200))
                 
             elif dpi_type == "exif_72dpi":
                 # EXIF specified 72 DPI (no JFIF resolution)
@@ -753,7 +753,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 
                 exif_bytes = piexif.dump(exif_data)
                 # Save without DPI parameter to avoid JFIF resolution
-                img.save(output_file, exif=exif_bytes)
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
                 
             elif dpi_type == "exif_200dpi":
                 # EXIF specified 200 DPI (no JFIF resolution)
@@ -763,7 +763,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 
                 exif_bytes = piexif.dump(exif_data)
                 # Save without DPI parameter to avoid JFIF resolution
-                img.save(output_file, exif=exif_bytes)
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif DPI setting failed, using ImageMagick fallback: {e}")
@@ -809,7 +809,7 @@ def _convert_jpeg_critical_combinations(source, output_dir):
             # Set orientation to 6 (90 degrees clockwise)
             exif_data["0th"][piexif.ImageIFD.Orientation] = 6
             exif_bytes = piexif.dump(exif_data)
-            img.save(output_file, exif=exif_bytes)
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif critical orientation failed, trying ImageMagick: {e}")
@@ -835,7 +835,7 @@ def _convert_jpeg_critical_combinations(source, output_dir):
             
             exif_bytes = piexif.dump(exif_data)
             # Save with JFIF 72 DPI (conflicts with EXIF 200 DPI)
-            img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(72, 72))
             
     except Exception as e:
         print(f"PIL/piexif critical DPI conflict failed, trying ImageMagick: {e}")
