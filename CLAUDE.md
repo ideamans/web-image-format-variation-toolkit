@@ -196,6 +196,8 @@ Create an animated sequence containing:
 - `jpeg/metadata_basic_exif.jpg` - Basic EXIF data only
 - `jpeg/metadata_gps.jpg` - GPS location data included
 - `jpeg/metadata_full_exif.jpg` - Complete EXIF metadata set
+- `jpeg/metadata_xmp.jpg` - XMP metadata blocks included
+- `jpeg/metadata_iptc.jpg` - IPTC metadata records included
 
 **ICC Profile Individual**
 
@@ -239,6 +241,14 @@ Create an animated sequence containing:
 **JFIF + EXIF DPI Conflict**
 
 - `jpeg/critical_jfif_exif_dpi.jpg` - JFIF units:1 72 DPI with EXIF 200 DPI, conflicting resolution specifications
+
+**XMP + IPTC Conflict**
+
+- `jpeg/critical_xmp_iptc_conflict.jpg` - XMP and IPTC metadata with conflicting information, potential parsing issues
+
+**XMP Complex Metadata**
+
+- `jpeg/critical_xmp_complex.jpg` - Complex nested XMP structures with Dublin Core and custom namespaces
 
 ### PNG Variations
 
@@ -440,11 +450,13 @@ output/
 ├── test_original.jpg       # JPEG source image (640x480)
 ├── test_original.png       # PNG source image (480x480)
 ├── test_original.gif       # GIF source animation (200x200, 10 frames)
-├── jpeg/                   # 34 JPEG variations (29 + 5 critical)
+├── jpeg/                   # 36 JPEG variations (29 + 7 critical)
 │   ├── colorspace_rgb.jpg
 │   ├── quality_80.jpg
 │   ├── orientation_6.jpg
 │   ├── dpi_jfif_72dpi.jpg
+│   ├── metadata_xmp.jpg
+│   ├── metadata_iptc.jpg
 │   └── ...
 ├── png/                    # 32 PNG variations (26 + 4 critical)
 │   ├── colortype_rgba.png
@@ -581,7 +593,7 @@ The `output/index.json` file contains comprehensive metadata for all generated i
 
 #### Index File Features
 
-- **Total entries**: 84 items (3 originals + 81 variations)
+- **Total entries**: 87 items (3 originals + 84 variations)
 - **Format identification**: "jpeg", "png", or "gif"
 - **Relative paths**: From output directory root
 - **Bilingual descriptions**: Japanese and English explanations
@@ -665,7 +677,7 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 
 - **16-bit PNG Generation**: OpenCV-based true 16-bit depth creation with sub-pixel noise
 - **Accurate Property Detection**: ImageMagick `identify` command integration
-- **100% Compliance Achievement**: All 87 variations pass specification requirements
+- **100% Compliance Achievement**: All 90 variations pass specification requirements
 - **Bilingual Documentation**: Japanese and English descriptions for international use
 
 ### Testing and CI/CD Integration

@@ -127,6 +127,18 @@
   },
   {
     "format": "jpeg",
+    "path": "jpeg/metadata_xmp.jpg",
+    "jp": "XMPメタデータブロック",
+    "en": "XMP metadata blocks"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/metadata_iptc.jpg",
+    "jp": "IPTCメタデータレコード",
+    "en": "IPTC metadata records"
+  },
+  {
+    "format": "jpeg",
     "path": "jpeg/icc_none.jpg",
     "jp": "カラープロファイルなし",
     "en": "No color profile"
@@ -226,6 +238,18 @@
     "path": "jpeg/critical_jfif_exif_dpi.jpg",
     "jp": "JFIF units:1 72DPIとEXIF 200DPIの併存",
     "en": "JFIF units:1 72DPI with EXIF 200DPI conflict"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_xmp_iptc_conflict.jpg",
+    "jp": "XMPとIPTCメタデータの競合",
+    "en": "XMP and IPTC metadata conflict"
+  },
+  {
+    "format": "jpeg",
+    "path": "jpeg/critical_xmp_complex.jpg",
+    "jp": "複雑なXMP構造とカスタム名前空間",
+    "en": "Complex XMP structures with custom namespaces"
   },
   {
     "format": "png",
