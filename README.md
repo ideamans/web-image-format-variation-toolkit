@@ -1,6 +1,6 @@
 # 画像処理テストツールキット
 
-JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、画像変換ツールの品質評価を行うためのPythonツールキットです。
+JPEG、PNG、GIF、WebP、AVIF形式の包括的なバリエーション画像を生成し、画像変換ツールの品質評価を行うためのPythonツールキットです。
 
 ## 📋 目次
 
@@ -37,22 +37,25 @@ JPEG、PNG、GIF形式の包括的なバリエーション画像を生成し、�
 ### 🔧 主要機能
 
 1. **元画像生成**: JPEG・PNG・GIF形式の理想的なテスト画像を生成
-2. **バリエーション作成**: 87種類の異なる形式バリエーションを自動生成
+2. **バリエーション作成**: 103種類の異なる形式バリエーションを自動生成
 3. **画像比較**: ディレクトリ間での画像品質比較（PSNR・SSIM計算、GIFアニメーション対応）
 4. **仕様適合性検証**: 生成画像が期待する仕様を満たすかの自動検証
 
 ### 📊 対応形式
 
-- **JPEG**: 34種類のバリエーション（色空間、品質、エンコーディング、メタデータ、Exif Orientation、DPI解像度等）
+- **JPEG**: 36種類のバリエーション（色空間、品質、エンコーディング、メタデータ、Exif Orientation、DPI解像度等）
 - **PNG**: 32種類のバリエーション（色タイプ、ビット深度、透明度、圧縮等）
 - **GIF**: 21種類のバリエーション（フレーム数、フレームレート、パレット、ディザリング等）
+- **WebP**: 3種類のバリエーション（lossy、lossless、animation）
+- **AVIF**: 3種類のバリエーション（lossy、lossless、animation）
 
 ## 🛠️ セットアップ
 
 ### 必要な環境
 
 - **Python**: 3.8以上
-- **ImageMagick**: 画像変換処理に必要
+- **ImageMagick**: 画像変換処理（AVIF生成を含む）に必要
+- **FFmpeg**: AVIF アニメーション生成に必要（libaom-av1エンコーダー搭載）
 - **OS**: Windows、macOS、Linux対応
 
 ### 1. Pythonの確認
@@ -65,21 +68,36 @@ python3 --version
 
 Python 3.8以上がインストールされていることを確認してください。
 
-### 2. ImageMagickのインストール
+### 2. ImageMagickとFFmpegのインストール
 
 **macOS (Homebrew使用):**
 ```bash
-brew install imagemagick
+# WebP、AVIF対応のImageMagickとFFmpegをインストール
+brew install imagemagick ffmpeg
 ```
 
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get update
-sudo apt-get install imagemagick
+sudo apt-get install imagemagick ffmpeg libavif-dev
 ```
 
 **Windows:**
-[ImageMagick公式サイト](https://imagemagick.org/script/download.php#windows)からダウンロードしてインストール
+- [ImageMagick公式サイト](https://imagemagick.org/script/download.php#windows)からダウンロードしてインストール
+- [FFmpeg公式サイト](https://ffmpeg.org/download.html#build-windows)からダウンロードしてインストール
+
+**インストール確認:**
+```bash
+# ImageMagickの確認
+magick -version
+
+# FFmpegの確認  
+ffmpeg -version
+
+# AVIF対応確認
+magick -list format | grep AVIF
+ffmpeg -encoders | grep av1
+```
 
 ### 3. プロジェクトのダウンロード
 
@@ -125,10 +143,12 @@ python toolkit.py generate-variations --test-compliance
 ```
 
 **実行結果:**
-- `output/jpeg/` - 29種類のJPEGバリエーション
+- `output/jpeg/` - 36種類のJPEGバリエーション
 - `output/png/` - 32種類のPNGバリエーション
-- `output/gif/` - 20種類のGIFバリエーション
-- `output/index.json` - 機械可読なメタデータファイル（84項目）
+- `output/gif/` - 21種類のGIFバリエーション
+- `output/webp/` - 3種類のWebPバリエーション（lossy、lossless、animation）
+- `output/avif/` - 3種類のAVIFバリエーション（lossy、lossless、animation）
+- `output/index.json` - 機械可読なメタデータファイル（103項目）
 
 ### ステップ3: 画像の比較
 
@@ -343,6 +363,22 @@ python toolkit.py compare-directories output/jpeg processed_jpeg --output-format
 | | `critical_fast_256colors_loop.gif` | 高速 + 256色 + ループ |
 | | `critical_single_optimized.gif` | 単一フレーム + 最適化 |
 
+### WebP バリエーション (3種類)
+
+| カテゴリ | ファイル名 | 説明 |
+|----------|------------|------|
+| **損失圧縮** | `webp/lossy/original.webp` | JPEGからの損失圧縮WebP |
+| **無損失圧縮** | `webp/lossless/original.webp` | PNGからの無損失圧縮WebP |
+| **アニメーション** | `webp/animation/original.webp` | GIFからの変換WebPアニメーション |
+
+### AVIF バリエーション (3種類)
+
+| カテゴリ | ファイル名 | 説明 |
+|----------|------------|------|
+| **損失圧縮** | `avif/lossy/original.avif` | JPEGからの損失圧縮AVIF（ImageMagick使用） |
+| **無損失圧縮** | `avif/lossless/original.avif` | PNGからの無損失圧縮AVIF（ImageMagick使用） |
+| **アニメーション** | `avif/animation/original.avif` | GIFからの変換AVIFアニメーション（FFmpeg使用） |
+
 ## 🔍 比較・分析機能
 
 ### 出力される指標
@@ -422,7 +458,7 @@ py-test-image-toolkit/
 
 ### 依存関係
 
-- **pillow**: 基本的な画像操作
+- **pillow**: 基本的な画像操作（WebP対応）
 - **numpy**: 数値計算と画像配列操作
 - **opencv-python**: 高度な画像処理と16ビット画像対応
 - **scikit-image**: 画質指標計算（PSNR、SSIM）
@@ -431,6 +467,12 @@ py-test-image-toolkit/
 - **noise**: Perlinノイズ生成
 - **piexif**: EXIF データ操作
 - **pandas**: データ分析とCSV出力
+- **pillow-heif**: AVIF読み込みサポート（オプション）
+
+### システム依存関係
+
+- **ImageMagick**: AVIF生成、高度な画像操作
+- **FFmpeg**: AVIF アニメーション生成（libaom-av1エンコーダー）
 
 ### カスタマイズ
 

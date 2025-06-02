@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from src.image_generator import generate_original_images, test_original_compliance
 from src.variation_generator import generate_variations, test_variation_compliance
 from src.image_comparator import compare_directories
+from src.variation_validator import validate_all_variations, save_validation_report
 
 
 def main():
@@ -99,6 +100,21 @@ For testing and validation, use pytest:
         help='Save comparison results to file'
     )
     
+    # Validate variations command
+    val_parser = subparsers.add_parser(
+        'validate-variations',
+        help='Validate generated variations against specifications'
+    )
+    val_parser.add_argument(
+        '--output-dir',
+        default='output',
+        help='Directory containing generated variations (default: output)'
+    )
+    val_parser.add_argument(
+        '--report-file',
+        help='Save validation report to file (use .json for JSON format)'
+    )
+    
     
     args = parser.parse_args()
     
@@ -131,6 +147,13 @@ For testing and validation, use pytest:
                 output_format=args.output_format,
                 output_file=args.output_file
             )
+            
+        elif args.command == 'validate-variations':
+            print("Validating format variations...")
+            results = validate_all_variations(args.output_dir)
+            
+            if args.report_file:
+                save_validation_report(results, args.report_file)
         print("\nOperation completed successfully!")
         return 0
         

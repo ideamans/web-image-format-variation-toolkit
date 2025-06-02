@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project aims to develop a Python-based image processing toolkit for generating and testing various image format variations, specifically focusing on JPEG, PNG, and GIF formats. The toolkit will be used to create comprehensive test datasets for image conversion library development.
+This project aims to develop a Python-based image processing toolkit for generating and testing various image format variations, specifically focusing on JPEG, PNG, GIF, WebP, and AVIF formats. The toolkit will be used to create comprehensive test datasets for image conversion library development.
 
 ## Technical Stack
 
@@ -19,6 +19,17 @@ This project aims to develop a Python-based image processing toolkit for generat
   - matplotlib: Visualization and histogram comparison
   - pytest: Test automation framework
 
+- **WebP and AVIF Support Libraries**:
+  - **WebP**: Native Pillow support (no additional libraries required)
+  - **AVIF**: pillow-heif>=0.22.0 (optional for reading AVIF files in validation)
+  - **AVIF Generation**: ImageMagick with AVIF support (system dependency)
+  - **AVIF Animation**: FFmpeg with libaom-av1 encoder (system dependency)
+
+- **System Dependencies**:
+  - **ImageMagick**: Required for AVIF generation and advanced image operations
+  - **FFmpeg**: Required for AVIF animation generation using libaom-av1 encoder
+  - **libavif**: System library for AVIF support in ImageMagick
+
 ## Code Architecture
 
 The toolkit follows a modular architecture with format-specific components:
@@ -31,12 +42,16 @@ src/
 │   ├── __init__.py
 │   ├── jpeg.py         # JPEG format variation generator
 │   ├── png.py          # PNG format variation generator
-│   └── gif.py          # GIF format variation generator
+│   ├── gif.py          # GIF format variation generator
+│   ├── webp.py         # WebP format variation generator
+│   └── avif.py         # AVIF format variation generator
 ├── validators/         # Format-specific variation validators
 │   ├── __init__.py
 │   ├── jpeg.py         # JPEG format variation validator
 │   ├── png.py          # PNG format variation validator
-│   └── gif.py          # GIF format variation validator
+│   ├── gif.py          # GIF format variation validator
+│   ├── webp.py         # WebP format variation validator
+│   └── avif.py         # AVIF format variation validator
 ├── utils/              # Common utility modules
 │   ├── __init__.py
 │   ├── imagemagick.py  # ImageMagick command wrapper utilities
@@ -474,7 +489,7 @@ python toolkit.py generate-variations [--source-dir SOURCE] [--output-dir OUTPUT
 ```
 
 - Generate all specified format variations from source images
-- Create directory structure: `output/jpeg/`, `output/png/`, and `output/gif/`
+- Create directory structure: `output/jpeg/`, `output/png/`, `output/gif/`, `output/webp/`, and `output/avif/`
 - **Generate machine-readable index file: `output/index.json`**
 - Optionally validate that each variation meets its requirements
 - Test file format compliance and parameter verification
@@ -483,7 +498,7 @@ python toolkit.py generate-variations [--source-dir SOURCE] [--output-dir OUTPUT
 
 ```
 output/
-├── index.json              # Machine-readable metadata (90 entries)
+├── index.json              # Machine-readable metadata (103 entries)
 ├── test_original.jpg       # JPEG source image (640x480)
 ├── test_original.png       # PNG source image (480x480)
 ├── test_original.gif       # GIF source animation (200x200, 10 frames)
@@ -499,10 +514,18 @@ output/
 │   ├── colortype_rgba.png
 │   ├── depth_16bit.png
 │   └── ...
-└── gif/                    # 21 GIF variations (18 + 3 critical)
-    ├── fps_fast.gif
-    ├── palette_2colors.gif
-    └── ...
+├── gif/                    # 21 GIF variations (18 + 3 critical)
+│   ├── fps_fast.gif
+│   ├── palette_2colors.gif
+│   └── ...
+├── webp/                   # 3 WebP variations (lossy, lossless, animation)
+│   ├── lossy/original.webp
+│   ├── lossless/original.webp
+│   └── animation/original.webp
+└── avif/                   # 3 AVIF variations (lossy, lossless, animation)
+    ├── lossy/original.avif
+    ├── lossless/original.avif
+    └── animation/original.avif
 ```
 
 ### Command 3: Image Comparison
@@ -517,7 +540,23 @@ python toolkit.py compare-directories DIR_A DIR_B [--output-format {table,json,c
 - Report files present in A but not B, and vice versa
 - Support multiple output formats for integration
 
-### Command 4: Testing and Validation (pytest-based)
+### Command 4: Variation Validation
+
+```bash
+python toolkit.py validate-variations [--output-dir OUTPUT] [--report-file FILE]
+```
+
+- Validate all generated variations against their specifications
+- **Comprehensive format support**: JPEG, PNG, GIF, WebP, and AVIF
+- **Advanced validation features**:
+  - WebP: Native PIL support for lossy/lossless/animation validation
+  - AVIF: ImageMagick fallback validation when PIL support unavailable
+  - Format-specific property validation (quality, compression, metadata)
+  - Animation frame counting and format verification
+- Generate detailed validation reports in JSON or text format
+- **Robust error handling**: Graceful fallback for format-specific limitations
+
+### Command 5: Testing and Validation (pytest-based)
 
 ```bash
 # Run all tests

@@ -10,6 +10,8 @@ from pathlib import Path
 from .generators.jpeg import JpegGenerator
 from .generators.png import PngGenerator
 from .generators.gif import GifGenerator
+from .generators.webp import WebpGenerator
+from .generators.avif import AvifGenerator
 
 
 def generate_variations(source_dir="output", output_dir="output"):
@@ -61,8 +63,15 @@ def generate_variations(source_dir="output", output_dir="output"):
     print("\nGenerating GIF variations...")
     gif_index = GifGenerator.generate_variations(str(gif_source), str(gif_output))
     
+    print("\nGenerating WebP variations...")
+    webp_index = WebpGenerator.generate_variations(source_dir, output_dir)
+    
+    print("\nGenerating AVIF variations...")
+    avif_index = AvifGenerator.generate_variations(source_dir, output_dir)
+    
     # Generate index.json
-    if jpeg_index is not None and png_index is not None and gif_index is not None:
+    if (jpeg_index is not None and png_index is not None and gif_index is not None and 
+        webp_index is not None and avif_index is not None):
         all_variations = []
         
         # Add original images
@@ -91,6 +100,8 @@ def generate_variations(source_dir="output", output_dir="output"):
         all_variations.extend(jpeg_index)
         all_variations.extend(png_index)
         all_variations.extend(gif_index)
+        all_variations.extend(webp_index)
+        all_variations.extend(avif_index)
         
         index_file = output_path / "index.json"
         
@@ -98,7 +109,7 @@ def generate_variations(source_dir="output", output_dir="output"):
             json.dump(all_variations, f, indent=2, ensure_ascii=False)
         
         print(f"\nGenerated index file: {index_file}")
-        print(f"Total variations indexed: {len(all_variations)} (including 3 originals)")
+        print(f"Total variations indexed: {len(all_variations)} (including 3 originals + WebP/AVIF)")
         
         return True
     else:
@@ -165,3 +176,13 @@ def generate_png_variations(source_file, output_dir):
 def generate_gif_variations(source_file, output_dir):
     """Legacy function - use GifGenerator.generate_variations instead."""
     return GifGenerator.generate_variations(source_file, output_dir)
+
+
+def generate_webp_variations(source_dir, output_dir):
+    """Legacy function - use WebpGenerator.generate_variations instead."""
+    return WebpGenerator.generate_variations(source_dir, output_dir)
+
+
+def generate_avif_variations(source_dir, output_dir):
+    """Legacy function - use AvifGenerator.generate_variations instead."""
+    return AvifGenerator.generate_variations(source_dir, output_dir)

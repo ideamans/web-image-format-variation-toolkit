@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']  # All branches
   pull_request:
-    branches: [main, develop]
+    branches: ['**']  # All branches
 
 jobs:
   test:
@@ -23,14 +23,22 @@ jobs:
           # GitHub Actions environment
           if [ "$GITHUB_ACTIONS" = "true" ]; then
             sudo apt-get update
+            
+            # Install ImageMagick with WebP and AVIF support
             sudo apt-get install -y imagemagick libmagickwand-dev
             
-            # Configure ImageMagick to allow PDF and other formats
+            # Install FFmpeg with AV1 encoder support for AVIF animation
+            sudo apt-get install -y ffmpeg
+            
+            # Install AVIF development libraries
+            sudo apt-get install -y libavif-dev libavif-bin
+            
+            # Install additional image format libraries
+            sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev
+            
+            # Configure ImageMagick to allow additional formats
             sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml || true
             sudo sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-6/policy.xml || true
-            
-            # Install additional image codecs
-            sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev
             
             # Install ICC color profiles
             sudo apt-get install -y icc-profiles icc-profiles-free
@@ -47,8 +55,16 @@ jobs:
             echo "Available ICC profiles:"
             find /usr/share/color -name "*.icc" 2>/dev/null || echo "No ICC profiles found"
             
-            # Verify ImageMagick installation
+            # Verify installations
+            echo "=== Installation Verification ==="
             magick -version || convert -version
+            echo "FFmpeg version:"
+            ffmpeg -version | head -1
+            echo "Available encoders with AV1:"
+            ffmpeg -encoders 2>/dev/null | grep av1 || echo "No AV1 encoders found"
+            echo "ImageMagick format support:"
+            magick -list format | grep -E "(WEBP|AVIF)" || echo "WebP/AVIF not found in ImageMagick"
+            
           else
             # Local wrkflw environment - skip system dependencies
             echo "Running in local environment, skipping system dependency installation"
@@ -94,13 +110,40 @@ jobs:
           python -c "import numpy; print(f'NumPy version: {numpy.__version__}')" 2>/dev/null || echo "NumPy not available"
           python -c "import piexif; print('piexif imported successfully')" 2>/dev/null || echo "piexif not available"
           python -c "import noise; print('noise imported successfully')" 2>/dev/null || echo "noise not available"
+          python -c "import pillow_heif; print('pillow-heif imported successfully')" 2>/dev/null || echo "pillow-heif not available (optional for AVIF)"
 
-          # Test ImageMagick availability (optional in local environment)
+          # Test WebP support in Pillow
+          python -c "from PIL import Image; Image.new('RGB', (10,10)).save('/tmp/test.webp', 'WEBP'); print('WebP support confirmed')" 2>/dev/null || echo "WebP support not available in Pillow"
+
+          # Test ImageMagick and FFmpeg availability (optional in local environment)
           if [ "$GITHUB_ACTIONS" = "true" ]; then
+            echo "=== System Tool Verification ==="
             python -c "import subprocess; subprocess.run(['magick', '-version'], check=True)" || \
             python -c "import subprocess; subprocess.run(['convert', '-version'], check=True)"
+            
+            python -c "import subprocess; subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True); print('FFmpeg available')" || echo "FFmpeg not available"
+            
+            # Test AVIF creation capability
+            python -c "
+import subprocess
+import tempfile
+import os
+# Test ImageMagick AVIF support
+result = subprocess.run(['magick', '-list', 'format'], capture_output=True, text=True)
+if 'AVIF' in result.stdout:
+    print('ImageMagick AVIF support confirmed')
+else:
+    print('ImageMagick AVIF support not available')
+
+# Test FFmpeg AV1 encoder
+result = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True)
+if 'libaom-av1' in result.stdout:
+    print('FFmpeg AV1 encoder support confirmed')
+else:
+    print('FFmpeg AV1 encoder not available')
+" 2>/dev/null || echo "AVIF capability test failed"
           else
-            echo "Skipping ImageMagick test in local environment"
+            echo "Skipping system tool tests in local environment"
           fi
 
       - name: Run basic Python tests
@@ -146,15 +189,46 @@ jobs:
             # Test generate-variations command  
             python toolkit.py generate-variations --source-dir test_output --output-dir test_output
             
+            # Test validate-variations command
+            python toolkit.py validate-variations --output-dir test_output --report-file test_output/validation_report.json
+            
             # Verify output files exist
+            echo "=== Output Verification ==="
             ls -la test_output/
+            echo "JPEG variations:"
             ls -la test_output/jpeg/ | head -10
+            echo "PNG variations:"
             ls -la test_output/png/ | head -10
+            echo "GIF variations:"
             ls -la test_output/gif/ | head -10
+            echo "WebP variations:"
+            ls -la test_output/webp/ || echo "WebP directory not found"
+            echo "AVIF variations:"
+            ls -la test_output/avif/ || echo "AVIF directory not found"
             
             # Verify index.json was created
             test -f test_output/index.json
+            echo "Index file lines:"
             wc -l test_output/index.json
+            
+            # Verify validation report was created
+            test -f test_output/validation_report.json
+            echo "Validation report created successfully"
+            
+            # Show format counts in index.json
+            echo "=== Format Distribution ==="
+            python -c "
+import json
+with open('test_output/index.json') as f:
+    data = json.load(f)
+formats = {}
+for item in data:
+    fmt = item.get('format', 'unknown')
+    formats[fmt] = formats.get(fmt, 0) + 1
+for fmt, count in sorted(formats.items()):
+    print(f'{fmt}: {count} variations')
+print(f'Total: {sum(formats.values())} items')
+" || echo "Format counting failed"
           else
             # Basic CLI test for local environment
             echo "=== Basic CLI Test ==="
@@ -183,10 +257,11 @@ jobs:
         with:
           name: test-images
           path: |
-            test_output/
-            !test_output/jpeg/
-            !test_output/png/
-            !test_output/gif/
+            test_output/index.json
+            test_output/validation_report.json
+            test_output/test_original.*
+            test_output/webp/
+            test_output/avif/
           retention-days: 7
 
       - name: Archive coverage reports

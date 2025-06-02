@@ -10,6 +10,8 @@ from pathlib import Path
 from .validators.jpeg import JpegValidator, ValidationResult
 from .validators.png import PngValidator
 from .validators.gif import GifValidator
+from .validators.webp import WebpValidator
+from .validators.avif import AvifValidator
 
 
 def validate_all_variations(output_dir="output"):
@@ -26,6 +28,8 @@ def validate_all_variations(output_dir="output"):
     jpeg_dir = output_path / "jpeg"
     png_dir = output_path / "png"
     gif_dir = output_path / "gif"
+    webp_dir = output_path / "webp"
+    avif_dir = output_path / "avif"
     
     results = {
         'total_tested': 0,
@@ -34,6 +38,8 @@ def validate_all_variations(output_dir="output"):
         'jpeg_results': [],
         'png_results': [],
         'gif_results': [],
+        'webp_results': [],
+        'avif_results': [],
         'summary': {}
     }
     
@@ -73,9 +79,33 @@ def validate_all_variations(output_dir="output"):
         print(f"GIF Variations: {gif_passed}/{len(gif_results)} passed")
         results['summary']['gif'] = {'passed': gif_passed, 'failed': gif_failed, 'total': len(gif_results)}
     
+    # Validate WebP variations
+    if webp_dir.exists():
+        webp_results = WebpValidator.validate_variations(webp_dir)
+        results['webp_results'] = webp_results
+        
+        webp_passed = sum(1 for r in webp_results if r.passed)
+        webp_failed = len(webp_results) - webp_passed
+        
+        print(f"WebP Variations: {webp_passed}/{len(webp_results)} passed")
+        results['summary']['webp'] = {'passed': webp_passed, 'failed': webp_failed, 'total': len(webp_results)}
+    
+    # Validate AVIF variations
+    if avif_dir.exists():
+        avif_results = AvifValidator.validate_variations(avif_dir)
+        results['avif_results'] = avif_results
+        
+        avif_passed = sum(1 for r in avif_results if r.passed)
+        avif_failed = len(avif_results) - avif_passed
+        
+        print(f"AVIF Variations: {avif_passed}/{len(avif_results)} passed")
+        results['summary']['avif'] = {'passed': avif_passed, 'failed': avif_failed, 'total': len(avif_results)}
+    
     # Overall summary
-    total_tested = len(results['jpeg_results']) + len(results['png_results']) + len(results['gif_results'])
-    total_passed = sum(1 for r in results['jpeg_results'] + results['png_results'] + results['gif_results'] if r.passed)
+    all_results = (results['jpeg_results'] + results['png_results'] + results['gif_results'] + 
+                   results['webp_results'] + results['avif_results'])
+    total_tested = len(all_results)
+    total_passed = sum(1 for r in all_results if r.passed)
     total_failed = total_tested - total_passed
     
     results['total_tested'] = total_tested
@@ -89,7 +119,7 @@ def validate_all_variations(output_dir="output"):
     print(f"Success rate: {(total_passed/total_tested*100):.1f}%" if total_tested > 0 else "No tests")
     
     # Print failed tests
-    failed_results = [r for r in results['jpeg_results'] + results['png_results'] + results['gif_results'] if not r.passed]
+    failed_results = [r for r in all_results if not r.passed]
     if failed_results:
         print(f"\nFAILED TESTS ({len(failed_results)}):")
         print("-" * 40)
@@ -116,7 +146,9 @@ def save_validation_report(results, output_file):
             'detailed_results': {
                 'jpeg': [r.to_dict() for r in results['jpeg_results']],
                 'png': [r.to_dict() for r in results['png_results']],
-                'gif': [r.to_dict() for r in results['gif_results']]
+                'gif': [r.to_dict() for r in results['gif_results']],
+                'webp': [r.to_dict() for r in results['webp_results']],
+                'avif': [r.to_dict() for r in results['avif_results']]
             }
         }
         
@@ -135,7 +167,9 @@ def save_validation_report(results, output_file):
             f.write(f"Success rate: {(results['total_passed']/results['total_tested']*100):.1f}%\n\n")
             
             # Failed tests
-            failed_results = [r for r in results['jpeg_results'] + results['png_results'] + results['gif_results'] if not r.passed]
+            all_results = (results['jpeg_results'] + results['png_results'] + results['gif_results'] + 
+                          results['webp_results'] + results['avif_results'])
+            failed_results = [r for r in all_results if not r.passed]
             if failed_results:
                 f.write(f"FAILED TESTS ({len(failed_results)}):\n")
                 f.write("-" * 30 + "\n")
@@ -162,6 +196,16 @@ def validate_png_variations(png_dir):
 def validate_gif_variations(gif_dir):
     """Legacy function - use GifValidator.validate_variations instead."""
     return GifValidator.validate_variations(gif_dir)
+
+
+def validate_webp_variations(webp_dir):
+    """Legacy function - use WebpValidator.validate_variations instead."""
+    return WebpValidator.validate_variations(webp_dir)
+
+
+def validate_avif_variations(avif_dir):
+    """Legacy function - use AvifValidator.validate_variations instead."""
+    return AvifValidator.validate_variations(avif_dir)
 
 
 if __name__ == "__main__":
