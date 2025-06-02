@@ -19,6 +19,43 @@ This project aims to develop a Python-based image processing toolkit for generat
   - matplotlib: Visualization and histogram comparison
   - pytest: Test automation framework
 
+## Code Architecture
+
+The toolkit follows a modular architecture with format-specific components:
+
+### Directory Structure
+
+```
+src/
+├── generators/          # Format-specific variation generators
+│   ├── __init__.py
+│   ├── jpeg.py         # JPEG format variation generator
+│   ├── png.py          # PNG format variation generator
+│   └── gif.py          # GIF format variation generator
+├── validators/         # Format-specific variation validators
+│   ├── __init__.py
+│   ├── jpeg.py         # JPEG format variation validator
+│   ├── png.py          # PNG format variation validator
+│   └── gif.py          # GIF format variation validator
+├── utils/              # Common utility modules
+│   ├── __init__.py
+│   ├── imagemagick.py  # ImageMagick command wrapper utilities
+│   └── metadata.py     # Metadata manipulation utilities
+├── image_generator.py  # Original test image generation
+├── image_comparator.py # Image comparison functionality
+├── variation_generator.py # Main variation generation coordinator
+├── variation_validator.py # Main validation coordinator
+└── utils.py           # Legacy utilities
+```
+
+### Architecture Benefits
+
+- **Modularity**: Each format has its own dedicated generator and validator
+- **Maintainability**: Format-specific code is isolated and easier to maintain
+- **Extensibility**: New formats can be added by creating new generator/validator modules
+- **Reusability**: Common utilities are shared across all formats
+- **Testing**: Each module can be tested independently
+
 ## Core Functionality
 
 The toolkit consists of three main components:

@@ -18,7 +18,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from src.image_generator import generate_original_images
 from src.variation_generator import generate_variations
-from src.variation_validator import validate_all_variations, validate_jpeg_file, validate_png_file, ValidationResult
+from src.variation_validator import validate_all_variations
+from src.validators.jpeg import JpegValidator, ValidationResult
+from src.validators.png import PngValidator
 
 
 class TestDetailedJPEGValidation:
@@ -50,19 +52,19 @@ class TestDetailedJPEGValidation:
         # Test RGB colorspace
         rgb_file = jpeg_dir / "colorspace_rgb.jpg"
         if rgb_file.exists():
-            result = validate_jpeg_file(rgb_file, "colorspace_rgb.jpg", {'colorspace': 'RGB'})
+            result = JpegValidator._validate_file(rgb_file, "colorspace_rgb.jpg", {'colorspace': 'RGB'})
             assert result.passed, f"RGB colorspace validation failed: {result.errors}"
         
         # Test CMYK colorspace
         cmyk_file = jpeg_dir / "colorspace_cmyk.jpg"
         if cmyk_file.exists():
-            result = validate_jpeg_file(cmyk_file, "colorspace_cmyk.jpg", {'colorspace': 'CMYK'})
+            result = JpegValidator._validate_file(cmyk_file, "colorspace_cmyk.jpg", {'colorspace': 'CMYK'})
             assert result.passed, f"CMYK colorspace validation failed: {result.errors}"
         
         # Test Grayscale colorspace
         gray_file = jpeg_dir / "colorspace_grayscale.jpg"
         if gray_file.exists():
-            result = validate_jpeg_file(gray_file, "colorspace_grayscale.jpg", {'colorspace': 'L'})
+            result = JpegValidator._validate_file(gray_file, "colorspace_grayscale.jpg", {'colorspace': 'L'})
             assert result.passed, f"Grayscale colorspace validation failed: {result.errors}"
     
     def test_quality_variations(self, temp_dir_with_variations):
@@ -79,7 +81,7 @@ class TestDetailedJPEGValidation:
         for filename, spec in quality_specs:
             file_path = jpeg_dir / filename
             if file_path.exists():
-                result = validate_jpeg_file(file_path, filename, spec)
+                result = JpegValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Quality validation failed for {filename}: {result.errors}"
     
     def test_encoding_variations(self, temp_dir_with_variations):
@@ -89,13 +91,13 @@ class TestDetailedJPEGValidation:
         # Test baseline encoding
         baseline_file = jpeg_dir / "encoding_baseline.jpg"
         if baseline_file.exists():
-            result = validate_jpeg_file(baseline_file, "encoding_baseline.jpg", {'progressive': False})
+            result = JpegValidator._validate_file(baseline_file, "encoding_baseline.jpg", {'progressive': False})
             assert result.passed, f"Baseline encoding validation failed: {result.errors}"
         
         # Test progressive encoding
         progressive_file = jpeg_dir / "encoding_progressive.jpg"
         if progressive_file.exists():
-            result = validate_jpeg_file(progressive_file, "encoding_progressive.jpg", {'progressive': True})
+            result = JpegValidator._validate_file(progressive_file, "encoding_progressive.jpg", {'progressive': True})
             assert result.passed, f"Progressive encoding validation failed: {result.errors}"
     
     def test_thumbnail_variations(self, temp_dir_with_variations):
@@ -105,13 +107,13 @@ class TestDetailedJPEGValidation:
         # Test no thumbnail
         no_thumb_file = jpeg_dir / "thumbnail_none.jpg"
         if no_thumb_file.exists():
-            result = validate_jpeg_file(no_thumb_file, "thumbnail_none.jpg", {'has_thumbnail': False})
+            result = JpegValidator._validate_file(no_thumb_file, "thumbnail_none.jpg", {'has_thumbnail': False})
             assert result.passed, f"No thumbnail validation failed: {result.errors}"
         
         # Test embedded thumbnail
         thumb_file = jpeg_dir / "thumbnail_embedded.jpg"
         if thumb_file.exists():
-            result = validate_jpeg_file(thumb_file, "thumbnail_embedded.jpg", {'has_thumbnail': True})
+            result = JpegValidator._validate_file(thumb_file, "thumbnail_embedded.jpg", {'has_thumbnail': True})
             assert result.passed, f"Embedded thumbnail validation failed: {result.errors}"
     
     def test_subsampling_variations(self, temp_dir_with_variations):
@@ -127,7 +129,7 @@ class TestDetailedJPEGValidation:
         for filename, spec in subsampling_specs:
             file_path = jpeg_dir / filename
             if file_path.exists():
-                result = validate_jpeg_file(file_path, filename, spec)
+                result = JpegValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Subsampling validation failed for {filename}: {result.errors}"
     
     def test_icc_profile_variations(self, temp_dir_with_variations):
@@ -137,19 +139,19 @@ class TestDetailedJPEGValidation:
         # Test no ICC profile
         no_icc_file = jpeg_dir / "icc_none.jpg"
         if no_icc_file.exists():
-            result = validate_jpeg_file(no_icc_file, "icc_none.jpg", {'has_icc_profile': False})
+            result = JpegValidator._validate_file(no_icc_file, "icc_none.jpg", {'has_icc_profile': False})
             assert result.passed, f"No ICC profile validation failed: {result.errors}"
         
         # Test sRGB ICC profile
         srgb_file = jpeg_dir / "icc_srgb.jpg"
         if srgb_file.exists():
-            result = validate_jpeg_file(srgb_file, "icc_srgb.jpg", {'has_icc_profile': True, 'colorspace_hint': 'sRGB'})
+            result = JpegValidator._validate_file(srgb_file, "icc_srgb.jpg", {'has_icc_profile': True, 'colorspace_hint': 'sRGB'})
             assert result.passed, f"sRGB ICC profile validation failed: {result.errors}"
         
         # Test Adobe RGB ICC profile
         adobe_file = jpeg_dir / "icc_adobergb.jpg"
         if adobe_file.exists():
-            result = validate_jpeg_file(adobe_file, "icc_adobergb.jpg", {'has_icc_profile': True, 'colorspace_hint': 'Adobe'})
+            result = JpegValidator._validate_file(adobe_file, "icc_adobergb.jpg", {'has_icc_profile': True, 'colorspace_hint': 'Adobe'})
             assert result.passed, f"Adobe RGB ICC profile validation failed: {result.errors}"
     
     def test_metadata_variations(self, temp_dir_with_variations):
@@ -166,7 +168,7 @@ class TestDetailedJPEGValidation:
         for filename, spec in metadata_specs:
             file_path = jpeg_dir / filename
             if file_path.exists():
-                result = validate_jpeg_file(file_path, filename, spec)
+                result = JpegValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Metadata validation failed for {filename}: {result.errors}"
     
     def test_orientation_variations(self, temp_dir_with_variations):
@@ -183,7 +185,7 @@ class TestDetailedJPEGValidation:
         for filename, spec in orientation_specs:
             file_path = jpeg_dir / filename
             if file_path.exists():
-                result = validate_jpeg_file(file_path, filename, spec)
+                result = JpegValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Orientation validation failed for {filename}: {result.errors}"
     
     def test_dpi_variations(self, temp_dir_with_variations):
@@ -201,7 +203,7 @@ class TestDetailedJPEGValidation:
         for filename, spec in dpi_specs:
             file_path = jpeg_dir / filename
             if file_path.exists():
-                result = validate_jpeg_file(file_path, filename, spec)
+                result = JpegValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"DPI validation failed for {filename}: {result.errors}"
 
 
@@ -242,7 +244,7 @@ class TestDetailedPNGValidation:
         for filename, spec in colortype_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Color type validation failed for {filename}: {result.errors}"
     
     def test_bit_depth_variations(self, temp_dir_with_variations):
@@ -258,7 +260,7 @@ class TestDetailedPNGValidation:
         for filename, spec in depth_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Bit depth validation failed for {filename}: {result.errors}"
     
     def test_compression_variations(self, temp_dir_with_variations):
@@ -274,7 +276,7 @@ class TestDetailedPNGValidation:
         for filename, spec in compression_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Compression validation failed for {filename}: {result.errors}"
     
     def test_alpha_variations(self, temp_dir_with_variations):
@@ -290,7 +292,7 @@ class TestDetailedPNGValidation:
         for filename, spec in alpha_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Alpha validation failed for {filename}: {result.errors}"
     
     def test_interlace_variations(self, temp_dir_with_variations):
@@ -305,7 +307,7 @@ class TestDetailedPNGValidation:
         for filename, spec in interlace_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Interlace validation failed for {filename}: {result.errors}"
     
     def test_metadata_variations(self, temp_dir_with_variations):
@@ -322,7 +324,7 @@ class TestDetailedPNGValidation:
         for filename, spec in metadata_specs:
             file_path = png_dir / filename
             if file_path.exists():
-                result = validate_png_file(file_path, filename, spec)
+                result = PngValidator._validate_file(file_path, filename, spec)
                 assert result.passed, f"Metadata validation failed for {filename}: {result.errors}"
     
     def test_filter_variations(self, temp_dir_with_variations):

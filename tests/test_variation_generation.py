@@ -16,7 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from src.image_generator import generate_original_images
 from src.variation_generator import generate_variations
-from src.variation_validator import validate_all_variations, ValidationResult
+from src.variation_validator import validate_all_variations
+from src.validators.jpeg import ValidationResult
 
 
 class TestVariationGeneration:
