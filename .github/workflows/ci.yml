@@ -124,24 +124,7 @@ jobs:
             python -c "import subprocess; subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True); print('FFmpeg available')" || echo "FFmpeg not available"
             
             # Test AVIF creation capability
-            python -c "
-import subprocess
-import tempfile
-import os
-# Test ImageMagick AVIF support
-result = subprocess.run(['magick', '-list', 'format'], capture_output=True, text=True)
-if 'AVIF' in result.stdout:
-    print('ImageMagick AVIF support confirmed')
-else:
-    print('ImageMagick AVIF support not available')
-
-# Test FFmpeg AV1 encoder
-result = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True)
-if 'libaom-av1' in result.stdout:
-    print('FFmpeg AV1 encoder support confirmed')
-else:
-    print('FFmpeg AV1 encoder not available')
-" 2>/dev/null || echo "AVIF capability test failed"
+            python -c "import subprocess; result = subprocess.run(['magick', '-list', 'format'], capture_output=True, text=True); print('ImageMagick AVIF support confirmed' if 'AVIF' in result.stdout else 'ImageMagick AVIF support not available'); result2 = subprocess.run(['ffmpeg', '-encoders'], capture_output=True, text=True); print('FFmpeg AV1 encoder support confirmed' if 'libaom-av1' in result2.stdout else 'FFmpeg AV1 encoder not available')" || echo "AVIF capability test failed"
           else
             echo "Skipping system tool tests in local environment"
           fi
@@ -217,18 +200,7 @@ else:
             
             # Show format counts in index.json
             echo "=== Format Distribution ==="
-            python -c "
-import json
-with open('test_output/index.json') as f:
-    data = json.load(f)
-formats = {}
-for item in data:
-    fmt = item.get('format', 'unknown')
-    formats[fmt] = formats.get(fmt, 0) + 1
-for fmt, count in sorted(formats.items()):
-    print(f'{fmt}: {count} variations')
-print(f'Total: {sum(formats.values())} items')
-" || echo "Format counting failed"
+            python -c "import json; data = json.load(open('test_output/index.json')); formats = {}; [formats.update({item.get('format', 'unknown'): formats.get(item.get('format', 'unknown'), 0) + 1}) for item in data]; [print(f'{fmt}: {count} variations') for fmt, count in sorted(formats.items())]; print(f'Total: {sum(formats.values())} items')" || echo "Format counting failed"
           else
             # Basic CLI test for local environment
             echo "=== Basic CLI Test ==="
@@ -253,7 +225,7 @@ print(f'Total: {sum(formats.values())} items')
 
       - name: Archive test artifacts
         uses: actions/upload-artifact@v4
-        if: always() && env.GITHUB_ACTIONS == 'true'
+        if: always()
         with:
           name: test-images
           path: |
@@ -266,7 +238,7 @@ print(f'Total: {sum(formats.values())} items')
 
       - name: Archive coverage reports
         uses: actions/upload-artifact@v4
-        if: always() && env.GITHUB_ACTIONS == 'true'
+        if: always()
         with:
           name: coverage-reports
           path: |
