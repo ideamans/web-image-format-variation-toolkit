@@ -75,8 +75,8 @@ class TestVariationGeneration:
         jpeg_dir = Path(temp_dir_with_originals) / "jpeg"
         jpeg_files = list(jpeg_dir.glob("*.jpg"))
         
-        # Expected: 29 regular variations + 5 critical combinations = 34 total
-        expected_count = 34
+        # Expected: 31 regular variations + 7 critical combinations = 38 total (including XMP/IPTC)
+        expected_count = 38
         actual_count = len(jpeg_files)
         assert actual_count >= expected_count - 2, f"Should have at least {expected_count-2} JPEG variations, got {actual_count}"
     
@@ -132,7 +132,9 @@ class TestVariationGeneration:
             "orientation_1.jpg",
             "orientation_6.jpg",
             "dpi_jfif_72dpi.jpg",
-            "dpi_exif_200dpi.jpg"
+            "dpi_exif_200dpi.jpg",
+            "metadata_xmp.jpg",
+            "metadata_iptc.jpg"
         ]
         
         for variation in expected_variations:
@@ -253,7 +255,7 @@ class TestVariationValidation:
         
         for result in all_results:
             for test_name, test_result in result.tests.items():
-                if test_name in ['color_mode', 'quality_file_size', 'has_exif', 'orientation']:
+                if test_name in ['color_mode', 'quality_file_size', 'has_exif', 'orientation', 'has_xmp', 'has_iptc']:
                     property_tests.append(test_result)
         
         assert len(property_tests) > 10, "Should perform multiple property validation tests"

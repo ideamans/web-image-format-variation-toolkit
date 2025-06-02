@@ -178,6 +178,8 @@ def validate_jpeg_variations(jpeg_dir):
         'metadata_basic_exif.jpg': {'has_exif': True, 'min_exif_tags': 1},
         'metadata_gps.jpg': {'has_exif': True, 'has_gps': True},
         'metadata_full_exif.jpg': {'has_exif': True, 'min_exif_tags': 10},
+        'metadata_xmp.jpg': {'has_xmp': True},
+        'metadata_iptc.jpg': {'has_iptc': True},
         
         # Orientation variations
         'orientation_1.jpg': {'orientation': 1},
@@ -410,10 +412,28 @@ def validate_jpeg_file(file_path, filename, expected_specs):
                                     result.add_test('exif_dpi', False, expected_dpi, "None")
                         
                 except Exception as e:
-                    if expected_specs['has_exif']:
+                    if expected_specs.get('has_exif', False):
                         result.add_test('exif_readable', False, True, False, str(e))
                     else:
                         result.add_test('exif_readable', True, False, False)
+            
+            # Test XMP metadata
+            if 'has_xmp' in expected_specs:
+                try:
+                    has_xmp = check_xmp_metadata_imagemagick(file_path)
+                    expected_xmp = expected_specs['has_xmp']
+                    result.add_test('has_xmp', has_xmp == expected_xmp, expected_xmp, has_xmp)
+                except Exception as e:
+                    result.add_test('has_xmp', False, True, False, str(e))
+            
+            # Test IPTC metadata
+            if 'has_iptc' in expected_specs:
+                try:
+                    has_iptc = check_iptc_metadata_imagemagick(file_path)
+                    expected_iptc = expected_specs['has_iptc']
+                    result.add_test('has_iptc', has_iptc == expected_iptc, expected_iptc, has_iptc)
+                except Exception as e:
+                    result.add_test('has_iptc', False, True, False, str(e))
             
     except Exception as e:
         result.add_test('file_readable', False, True, False, str(e))
@@ -654,6 +674,50 @@ def get_jpeg_properties_imagemagick(file_path):
             
     except (subprocess.CalledProcessError, FileNotFoundError, ValueError, IndexError):
         return None
+
+
+def check_xmp_metadata_imagemagick(file_path):
+    """
+    Check if image has XMP metadata using ImageMagick identify command.
+    
+    Args:
+        file_path (Path): Path to image file
+        
+    Returns:
+        bool: True if XMP metadata is present, False otherwise
+    """
+    try:
+        # Get XMP metadata
+        cmd = ["identify", "-format", "%[xmp:*]", str(file_path)]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        xmp_data = result.stdout.strip()
+        return bool(xmp_data and xmp_data != "")
+        
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def check_iptc_metadata_imagemagick(file_path):
+    """
+    Check if image has IPTC metadata using ImageMagick identify command.
+    
+    Args:
+        file_path (Path): Path to image file
+        
+    Returns:
+        bool: True if IPTC metadata is present, False otherwise
+    """
+    try:
+        # Get IPTC metadata
+        cmd = ["identify", "-format", "%[iptc:*]", str(file_path)]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        iptc_data = result.stdout.strip()
+        return bool(iptc_data and iptc_data != "")
+        
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
 
 
 if __name__ == "__main__":

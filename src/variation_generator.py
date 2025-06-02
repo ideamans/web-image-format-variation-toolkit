@@ -145,6 +145,8 @@ def generate_jpeg_variations(source_file, output_dir):
             ("basic_exif", "metadata", "基本的なEXIF情報のみ", "Basic EXIF information only"),
             ("gps", "metadata", "GPS位置情報付きEXIF", "EXIF with GPS location data"),
             ("full_exif", "metadata", "完全なEXIF情報（撮影情報等）", "Complete EXIF information (shooting data, etc.)"),
+            ("xmp", "metadata", "XMPメタデータブロック", "XMP metadata blocks"),
+            ("iptc", "metadata", "IPTCメタデータレコード", "IPTC metadata records"),
             
             # ICC profile variations
             ("none", "icc", "カラープロファイルなし", "No color profile"),
@@ -209,7 +211,9 @@ def generate_jpeg_variations(source_file, output_dir):
             ("critical_progressive_fullmeta.jpg", "プログレッシブ形式と完全メタデータの組み合わせ", "Progressive format with complete metadata"),
             ("critical_thumbnail_progressive.jpg", "サムネイル埋め込みとプログレッシブの組み合わせ", "Embedded thumbnail with progressive format"),
             ("critical_orientation_metadata.jpg", "回転orientation情報と複雑メタデータの組み合わせ", "Rotated orientation with complex metadata"),
-            ("critical_jfif_exif_dpi.jpg", "JFIF units:1 72DPIとEXIF 200DPIの併存", "JFIF units:1 72DPI with EXIF 200DPI conflict")
+            ("critical_jfif_exif_dpi.jpg", "JFIF units:1 72DPIとEXIF 200DPIの併存", "JFIF units:1 72DPI with EXIF 200DPI conflict"),
+            ("critical_xmp_iptc_conflict.jpg", "XMPとIPTCメタデータの競合", "XMP and IPTC metadata conflict"),
+            ("critical_xmp_complex.jpg", "複雑なXMP構造とカスタム名前空間", "Complex XMP structures with custom namespaces")
         ]
         
         _convert_jpeg_critical_combinations(source_file, output_dir)
@@ -555,7 +559,7 @@ def _convert_jpeg_thumbnail(source, output_dir, thumbnail):
                 # Save original image with embedded thumbnail
                 with Image.open(source) as orig_img:
                     exif_bytes = piexif.dump(exif_data)
-                    orig_img.save(output_file, exif=exif_bytes)
+                    orig_img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
                     
         except Exception as e:
             print(f"PIL thumbnail embedding failed, using simple copy: {e}")
@@ -599,6 +603,12 @@ def _convert_jpeg_metadata(source, output_dir, metadata):
         cmd = ["convert", source, "-define", "jpeg:preserve-settings", 
                "-set", "exif:Software", "Test Generator", 
                "-set", "exif:DateTime", "2025:05:31 12:00:00", output_file]
+    elif metadata == "xmp":
+        _convert_jpeg_xmp(source, output_file)
+        return
+    elif metadata == "iptc":
+        _convert_jpeg_iptc(source, output_file)
+        return
     else:
         # Keep original metadata for gps and full_exif
         cmd = ["convert", source, output_file]
@@ -693,7 +703,7 @@ def _convert_jpeg_orientation(source, output_dir, orientation):
             exif_bytes = piexif.dump(exif_data)
             
             # Save with new EXIF orientation
-            img.save(output_file, exif=exif_bytes)
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif orientation setting failed, trying ImageMagick fallback: {e}")
@@ -725,7 +735,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(1, 1))  # PIL sets JFIF units=0 for 1:1
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(1, 1))  # PIL sets JFIF units=0 for 1:1
                 
             elif dpi_type == "jfif_72dpi":
                 # JFIF units:1 with 72 DPI
@@ -734,7 +744,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(72, 72))
                 
             elif dpi_type == "jfif_200dpi":
                 # JFIF units:1 with 200 DPI
@@ -743,7 +753,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 exif_data["0th"].pop(piexif.ImageIFD.ResolutionUnit, None)
                 
                 exif_bytes = piexif.dump(exif_data)
-                img.save(output_file, exif=exif_bytes, dpi=(200, 200))
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(200, 200))
                 
             elif dpi_type == "exif_72dpi":
                 # EXIF specified 72 DPI (no JFIF resolution)
@@ -753,7 +763,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 
                 exif_bytes = piexif.dump(exif_data)
                 # Save without DPI parameter to avoid JFIF resolution
-                img.save(output_file, exif=exif_bytes)
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
                 
             elif dpi_type == "exif_200dpi":
                 # EXIF specified 200 DPI (no JFIF resolution)
@@ -763,7 +773,7 @@ def _convert_jpeg_dpi(source, output_dir, dpi_type):
                 
                 exif_bytes = piexif.dump(exif_data)
                 # Save without DPI parameter to avoid JFIF resolution
-                img.save(output_file, exif=exif_bytes)
+                img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif DPI setting failed, using ImageMagick fallback: {e}")
@@ -809,7 +819,7 @@ def _convert_jpeg_critical_combinations(source, output_dir):
             # Set orientation to 6 (90 degrees clockwise)
             exif_data["0th"][piexif.ImageIFD.Orientation] = 6
             exif_bytes = piexif.dump(exif_data)
-            img.save(output_file, exif=exif_bytes)
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes)
             
     except Exception as e:
         print(f"PIL/piexif critical orientation failed, trying ImageMagick: {e}")
@@ -835,12 +845,20 @@ def _convert_jpeg_critical_combinations(source, output_dir):
             
             exif_bytes = piexif.dump(exif_data)
             # Save with JFIF 72 DPI (conflicts with EXIF 200 DPI)
-            img.save(output_file, exif=exif_bytes, dpi=(72, 72))
+            img.save(output_file, "JPEG", quality=95, exif=exif_bytes, dpi=(72, 72))
             
     except Exception as e:
         print(f"PIL/piexif critical DPI conflict failed, trying ImageMagick: {e}")
         cmd = ["convert", source, "-density", "72x72", "-units", "PixelsPerInch", output_file]
         _run_imagemagick_command(cmd)
+    
+    # XMP + IPTC Conflict
+    output_file = os.path.join(output_dir, "critical_xmp_iptc_conflict.jpg")
+    _convert_jpeg_xmp_iptc_conflict(source, output_file)
+    
+    # XMP Complex Metadata
+    output_file = os.path.join(output_dir, "critical_xmp_complex.jpg")
+    _convert_jpeg_xmp_complex(source, output_file)
 
 
 # PNG conversion functions
@@ -1022,6 +1040,176 @@ def _run_imagemagick_command(cmd):
     except FileNotFoundError:
         print("ImageMagick not found. Please install ImageMagick.")
         return False
+
+
+def _convert_jpeg_xmp(source, output_file):
+    """Convert JPEG with XMP metadata."""
+    try:
+        from PIL import Image
+        import piexif
+        
+        with Image.open(source) as img:
+            # Create XMP metadata block
+            xmp_data = '''<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Test Generator 1.0">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:xmp="http://ns.adobe.com/xap/1.0/">
+   <dc:title>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">Test Image with XMP</rdf:li>
+    </rdf:Alt>
+   </dc:title>
+   <dc:description>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">Sample image for XMP metadata testing</rdf:li>
+    </rdf:Alt>
+   </dc:description>
+   <dc:creator>
+    <rdf:Seq>
+     <rdf:li>Test Generator</rdf:li>
+    </rdf:Seq>
+   </dc:creator>
+   <xmp:CreateDate>2025-05-31T12:00:00</xmp:CreateDate>
+   <xmp:ModifyDate>2025-05-31T12:00:00</xmp:ModifyDate>
+   <xmp:CreatorTool>Python Test Image Toolkit</xmp:CreatorTool>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>'''
+            
+            # Save image with XMP data embedded
+            img.save(output_file, "JPEG", quality=95)
+            
+            # Use ImageMagick to embed XMP data
+            cmd = ["convert", output_file, "-set", "xmp", xmp_data, output_file]
+            _run_imagemagick_command(cmd)
+            
+    except Exception as e:
+        print(f"XMP metadata embedding failed, using ImageMagick fallback: {e}")
+        cmd = ["convert", source, "-set", "xmp:title", "Test Image with XMP", output_file]
+        _run_imagemagick_command(cmd)
+
+
+def _convert_jpeg_iptc(source, output_file):
+    """Convert JPEG with IPTC metadata."""
+    try:
+        # Use ImageMagick to embed IPTC data
+        cmd = [
+            "convert", source,
+            "-set", "iptc:2:120", "XMP Test Caption",
+            "-set", "iptc:2:80", "Test Generator",
+            "-set", "iptc:2:05", "IPTC Test Title",
+            "-set", "iptc:2:25", "iptc metadata test",
+            "-set", "iptc:2:110", "Photo credit test",
+            "-set", "iptc:2:116", "Copyright Test 2025",
+            output_file
+        ]
+        _run_imagemagick_command(cmd)
+        
+    except Exception as e:
+        print(f"IPTC metadata embedding failed, using simple copy: {e}")
+        cmd = ["convert", source, output_file]
+        _run_imagemagick_command(cmd)
+
+
+def _convert_jpeg_xmp_iptc_conflict(source, output_file):
+    """Create JPEG with conflicting XMP and IPTC metadata."""
+    try:
+        from PIL import Image
+        
+        with Image.open(source) as img:
+            # Create XMP metadata with title "XMP Title"
+            xmp_data = '''<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Test Generator 1.0">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+      xmlns:dc="http://purl.org/dc/elements/1.1/">
+   <dc:title>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">XMP Title</rdf:li>
+    </rdf:Alt>
+   </dc:title>
+   <dc:description>
+    <rdf:Alt>
+     <rdf:li xml:lang="x-default">XMP Description</rdf:li>
+    </rdf:Alt>
+   </dc:description>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>'''
+            
+            img.save(output_file, "JPEG", quality=95)
+            
+            # Use ImageMagick to add both XMP and conflicting IPTC
+            cmd = [
+                "convert", output_file,
+                "-set", "xmp", xmp_data,
+                "-set", "iptc:2:05", "IPTC Title (Different)",
+                "-set", "iptc:2:120", "IPTC Caption (Different)",
+                output_file
+            ]
+            _run_imagemagick_command(cmd)
+            
+    except Exception as e:
+        print(f"XMP/IPTC conflict creation failed, using simple copy: {e}")
+        cmd = ["convert", source, output_file]
+        _run_imagemagick_command(cmd)
+
+
+def _convert_jpeg_xmp_complex(source, output_file):
+    """Create JPEG with complex nested XMP structures."""
+    try:
+        from PIL import Image
+        
+        with Image.open(source) as img:
+            # Create complex XMP with custom namespaces and nested structures
+            xmp_data = '''<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Test Generator 1.0">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+      xmlns:custom="http://example.com/test/1.0/">
+   <dc:title>
+    <rdf:Alt>
+     <rdf:li xml:lang="en">Complex XMP Test</rdf:li>
+     <rdf:li xml:lang="ja">複雑なXMPテスト</rdf:li>
+    </rdf:Alt>
+   </dc:title>
+   <dc:subject>
+    <rdf:Bag>
+     <rdf:li>test</rdf:li>
+     <rdf:li>metadata</rdf:li>
+     <rdf:li>xmp</rdf:li>
+     <rdf:li>complex</rdf:li>
+    </rdf:Bag>
+   </dc:subject>
+   <custom:testProperty>Custom Value</custom:testProperty>
+   <custom:nestedStructure>
+    <rdf:Description>
+     <custom:level1>Value 1</custom:level1>
+     <custom:level2>
+      <rdf:Description>
+       <custom:nested>Deep nested value</custom:nested>
+      </rdf:Description>
+     </custom:level2>
+    </rdf:Description>
+   </custom:nestedStructure>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>'''
+            
+            img.save(output_file, "JPEG", quality=95)
+            
+            # Use ImageMagick to embed complex XMP
+            cmd = ["convert", output_file, "-set", "xmp", xmp_data, output_file]
+            _run_imagemagick_command(cmd)
+            
+    except Exception as e:
+        print(f"Complex XMP creation failed, using simple copy: {e}")
+        cmd = ["convert", source, output_file]
+        _run_imagemagick_command(cmd)
 
 
 def _create_16bit_png_opencv(source_file, output_file):

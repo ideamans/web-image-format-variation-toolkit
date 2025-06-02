@@ -319,7 +319,7 @@ def save_jpeg_with_metadata(img, filename):
     exif_bytes = piexif.dump(exif_dict)
     
     img.save(filename, "JPEG", 
-             quality=98,
+             quality=95,
              subsampling=0,
              exif=exif_bytes,
              optimize=False)

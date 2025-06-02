@@ -1,6 +1,6 @@
 # Image Processing Toolkit Makefile
 
-.PHONY: help install test test-original test-variations test-all clean lint format check-deps
+.PHONY: help install test test-original test-variations test-all clean lint format check-deps output
 
 help:
 	@echo "Available commands:"
@@ -9,6 +9,7 @@ help:
 	@echo "  test-original Run original image generation tests"
 	@echo "  test-variations Run variation generation and validation tests"
 	@echo "  test-all      Run all tests with coverage"
+	@echo "  output        Run tests and generate complete output"
 	@echo "  clean         Clean up temporary files"
 	@echo "  lint          Run code linting"
 	@echo "  format        Format code with black"
@@ -71,3 +72,15 @@ dev-setup: install check-deps
 
 dev-test: clean test-all integration-test
 	@echo "Full development test suite completed"
+
+# Production output generation
+output:
+	@echo "Starting production output generation..."
+	@echo "Step 1: Running all tests..."
+	pytest tests/ -v
+	@echo "Step 2: Tests passed! Generating original images..."
+	python toolkit.py generate-original --output-dir output
+	@echo "Step 3: Generating variations..."
+	python toolkit.py generate-variations --source-dir output --output-dir output
+	@echo "✓ Complete output generation finished successfully!"
+	@echo "Generated files are in the 'output/' directory"
