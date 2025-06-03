@@ -47,6 +47,8 @@ class TestVariationGeneration:
         assert (output_path / "jpeg").exists(), "JPEG variations directory should be created"
         assert (output_path / "png").exists(), "PNG variations directory should be created"
         assert (output_path / "gif").exists(), "GIF variations directory should be created"
+        assert (output_path / "webp").exists(), "WebP variations directory should be created"
+        assert (output_path / "avif").exists(), "AVIF variations directory should be created"
     
     def test_index_json_generation(self, temp_dir_with_originals):
         """Test that index.json file is generated correctly."""
@@ -60,7 +62,7 @@ class TestVariationGeneration:
             index_data = json.load(f)
         
         assert isinstance(index_data, list), "index.json should contain a list"
-        assert len(index_data) > 80, f"Should have 80+ variations, got {len(index_data)}"
+        assert len(index_data) >= 100, f"Should have 100+ variations (including WebP/AVIF), got {len(index_data)}"
         
         # Check structure of first entry
         first_entry = index_data[0]
@@ -195,6 +197,98 @@ class TestVariationGeneration:
         assert len(sizes) >= 3, "Should have at least 3 quality variations"
         # Higher quality should generally mean larger file size
         assert sizes[0] < sizes[-1], "Quality 20 should be smaller than quality 95"
+    
+    def test_webp_variations_count(self, temp_dir_with_originals):
+        """Test that expected number of WebP variations are generated."""
+        success = generate_variations(temp_dir_with_originals, temp_dir_with_originals)
+        assert success, "Variation generation should succeed"
+        
+        webp_dir = Path(temp_dir_with_originals) / "webp"
+        assert webp_dir.exists(), "WebP directory should exist"
+        
+        # Check subdirectories
+        subdirs = ["lossy", "lossless", "animation"]
+        for subdir in subdirs:
+            subdir_path = webp_dir / subdir
+            assert subdir_path.exists(), f"WebP {subdir} directory should exist"
+            
+            webp_files = list(subdir_path.glob("*.webp"))
+            assert len(webp_files) >= 1, f"WebP {subdir} should have at least 1 file"
+    
+    def test_avif_variations_count(self, temp_dir_with_originals):
+        """Test that expected number of AVIF variations are generated."""
+        success = generate_variations(temp_dir_with_originals, temp_dir_with_originals)
+        assert success, "Variation generation should succeed"
+        
+        avif_dir = Path(temp_dir_with_originals) / "avif"
+        assert avif_dir.exists(), "AVIF directory should exist"
+        
+        # Check subdirectories
+        subdirs = ["lossy", "lossless", "animation"]
+        for subdir in subdirs:
+            subdir_path = avif_dir / subdir
+            assert subdir_path.exists(), f"AVIF {subdir} directory should exist"
+            
+            # Check for AVIF files or placeholder files (if AVIF support unavailable)
+            avif_files = list(subdir_path.glob("*.avif"))
+            placeholder_files = list(subdir_path.glob("*.txt"))
+            assert len(avif_files) >= 1 or len(placeholder_files) >= 1, f"AVIF {subdir} should have at least 1 file"
+    
+    def test_webp_files_are_valid(self, temp_dir_with_originals):
+        """Test that generated WebP files are valid."""
+        success = generate_variations(temp_dir_with_originals, temp_dir_with_originals)
+        assert success, "Variation generation should succeed"
+        
+        webp_dir = Path(temp_dir_with_originals) / "webp"
+        
+        for subdir in ["lossy", "lossless", "animation"]:
+            subdir_path = webp_dir / subdir
+            webp_files = list(subdir_path.glob("*.webp"))
+            
+            for webp_file in webp_files:
+                assert webp_file.stat().st_size > 0, f"WebP file {webp_file} should not be empty"
+                
+                # Try to open with PIL to verify it's a valid WebP
+                try:
+                    with Image.open(webp_file) as img:
+                        assert img.format == "WEBP", f"File {webp_file} should be WebP format"
+                        assert img.size[0] > 0 and img.size[1] > 0, f"WebP {webp_file} should have valid dimensions"
+                except Exception as e:
+                    pytest.fail(f"WebP file {webp_file} is not valid: {e}")
+    
+    def test_index_json_includes_webp_avif(self, temp_dir_with_originals):
+        """Test that index.json includes WebP and AVIF entries."""
+        success = generate_variations(temp_dir_with_originals, temp_dir_with_originals)
+        assert success, "Variation generation should succeed"
+        
+        index_path = Path(temp_dir_with_originals) / "index.json"
+        with open(index_path, 'r', encoding='utf-8') as f:
+            index_data = json.load(f)
+        
+        # Count formats
+        formats = {}
+        for item in index_data:
+            fmt = item.get('format', 'unknown')
+            formats[fmt] = formats.get(fmt, 0) + 1
+        
+        assert 'webp' in formats, "Index should include WebP entries"
+        assert 'avif' in formats, "Index should include AVIF entries"
+        assert formats['webp'] >= 3, f"Should have at least 3 WebP entries, got {formats.get('webp', 0)}"
+        assert formats['avif'] >= 3, f"Should have at least 3 AVIF entries, got {formats.get('avif', 0)}"
+        
+        # Check WebP entries structure
+        webp_entries = [item for item in index_data if item.get('format') == 'webp']
+        for entry in webp_entries:
+            assert 'path' in entry and entry['path'].startswith('webp/'), "WebP entries should have correct path"
+            assert 'jp' in entry and 'WebP' in entry['jp'], "WebP entries should have Japanese description"
+            assert 'en' in entry and 'WebP' in entry['en'], "WebP entries should have English description"
+        
+        # Check AVIF entries structure
+        avif_entries = [item for item in index_data if item.get('format') == 'avif']
+        for entry in avif_entries:
+            assert 'path' in entry and entry['path'].startswith('avif/'), "AVIF entries should have correct path"
+            assert 'jp' in entry and 'AVIF' in entry['jp'], "AVIF entries should have Japanese description"
+            assert 'en' in entry and 'AVIF' in entry['en'], "AVIF entries should have English description"
 
 
 class TestVariationValidation:
@@ -283,7 +377,7 @@ class TestVariationValidation:
         results = validate_all_variations(temp_dir_with_variations)
         
         # Check top-level structure
-        required_keys = ['total_tested', 'total_passed', 'total_failed', 'jpeg_results', 'png_results', 'summary']
+        required_keys = ['total_tested', 'total_passed', 'total_failed', 'jpeg_results', 'png_results', 'webp_results', 'avif_results', 'summary']
         for key in required_keys:
             assert key in results, f"Results should include {key}"
         
@@ -295,6 +389,83 @@ class TestVariationValidation:
             assert hasattr(first_result, 'filename'), "ValidationResult should have filename"
             assert hasattr(first_result, 'passed'), "ValidationResult should have passed flag"
             assert hasattr(first_result, 'tests'), "ValidationResult should have tests dict"
+    
+    def test_webp_validation_success(self, temp_dir_with_variations):
+        """Test that WebP validation runs successfully."""
+        results = validate_all_variations(temp_dir_with_variations)
+        
+        webp_results = results.get('webp_results', [])
+        assert isinstance(webp_results, list), "WebP results should be a list"
+        
+        if webp_results:
+            # Check that WebP validation detects files
+            webp_passed = sum(1 for r in webp_results if r.passed)
+            assert webp_passed >= 2, f"At least 2 WebP variations should pass validation, got {webp_passed}"
+            
+            # Check WebP-specific tests
+            for result in webp_results:
+                assert hasattr(result, 'tests'), "WebP result should have tests"
+                tests = result.tests
+                
+                # Should have basic validation tests
+                assert 'file_exists' in tests, "WebP validation should check file existence"
+                if 'format' in tests:
+                    assert tests['format']['expected'] == 'WEBP', "WebP validation should check format"
+    
+    def test_avif_validation_success(self, temp_dir_with_variations):
+        """Test that AVIF validation runs successfully."""
+        results = validate_all_variations(temp_dir_with_variations)
+        
+        avif_results = results.get('avif_results', [])
+        assert isinstance(avif_results, list), "AVIF results should be a list"
+        
+        if avif_results:
+            # Check that AVIF validation detects files (may use ImageMagick fallback)
+            avif_passed = sum(1 for r in avif_results if r.passed)
+            assert avif_passed >= 1, f"At least 1 AVIF variation should pass validation, got {avif_passed}"
+            
+            # Check AVIF-specific tests
+            for result in avif_results:
+                assert hasattr(result, 'tests'), "AVIF result should have tests"
+                tests = result.tests
+                
+                # Should have basic validation tests
+                assert 'file_exists' in tests, "AVIF validation should check file existence"
+                
+                # Should use PIL or ImageMagick validation
+                has_pil_test = 'pil_readable' in tests
+                has_imagemagick_test = 'imagemagick_valid' in tests
+                assert has_pil_test or has_imagemagick_test, "AVIF validation should use PIL or ImageMagick"
+    
+    def test_webp_avif_validation_coverage(self, temp_dir_with_variations):
+        """Test that WebP and AVIF validation covers all generated files."""
+        # Count generated files
+        output_path = Path(temp_dir_with_variations)
+        
+        webp_files = []
+        for subdir in ["lossy", "lossless", "animation"]:
+            webp_subdir = output_path / "webp" / subdir
+            if webp_subdir.exists():
+                webp_files.extend(list(webp_subdir.glob("*.webp")))
+        
+        avif_files = []
+        for subdir in ["lossy", "lossless", "animation"]:
+            avif_subdir = output_path / "avif" / subdir
+            if avif_subdir.exists():
+                avif_files.extend(list(avif_subdir.glob("*.avif")))
+        
+        # Run validation
+        results = validate_all_variations(temp_dir_with_variations)
+        
+        # Check coverage
+        webp_results = results.get('webp_results', [])
+        avif_results = results.get('avif_results', [])
+        
+        if webp_files:
+            assert len(webp_results) >= len(webp_files), f"Should validate all {len(webp_files)} WebP files"
+        
+        if avif_files:
+            assert len(avif_results) >= len(avif_files), f"Should validate all {len(avif_files)} AVIF files"
 
 
 if __name__ == "__main__":

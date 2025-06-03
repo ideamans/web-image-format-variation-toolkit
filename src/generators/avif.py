@@ -7,7 +7,6 @@ lossy, lossless, and animation categories.
 
 import os
 from pathlib import Path
-from PIL import Image
 import sys
 import os
 # Add parent directory to path for image_generator import
@@ -29,15 +28,8 @@ except (subprocess.SubprocessError, FileNotFoundError):
     IMAGEMAGICK_AVIF_AVAILABLE = False
     print("ImageMagick not available")
 
-# Try to enable pillow-heif for reading AVIF files (optional)
-try:
-    import pillow_heif
-    pillow_heif.register_heif_opener()
-    PILLOW_AVIF_READ = True
-    print("pillow-heif available for AVIF reading")
-except ImportError:
-    PILLOW_AVIF_READ = False
-    print("pillow-heif not available - AVIF files won't be readable by PIL")
+# AVIF creation relies on ImageMagick/FFmpeg, not PIL
+PILLOW_AVIF_READ = False
 
 # AVIF is available if ImageMagick can create files
 AVIF_AVAILABLE = IMAGEMAGICK_AVIF_AVAILABLE
@@ -58,21 +50,15 @@ def _test_avif_support():
         import tempfile
         import os
         
-        # Create test image with PIL
-        test_img = Image.new('RGB', (10, 10), color='red')
-        test_jpg = tempfile.mktemp(suffix='.jpg')
+        # Create a simple test image using ImageMagick directly
         test_avif = tempfile.mktemp(suffix='.avif')
         
-        # Save as JPEG first
-        test_img.save(test_jpg, 'JPEG', quality=95)
-        
-        # Use ImageMagick to convert to AVIF
-        cmd = ['magick', test_jpg, '-quality', '80', test_avif]
+        # Use ImageMagick to create a test AVIF directly
+        cmd = ['magick', '-size', '10x10', 'xc:red', '-quality', '80', test_avif]
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0 and os.path.exists(test_avif):
             # Clean up
-            os.unlink(test_jpg)
             os.unlink(test_avif)
             return True
         else:

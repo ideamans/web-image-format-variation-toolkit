@@ -85,7 +85,7 @@ def compare_directories(dir_a, dir_b, output_format="table", output_file=None):
 
 def _get_image_files(directory):
     """Get all image files in a directory."""
-    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif'}
+    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp', '.avif'}
     files = {}
     
     for file_path in directory.rglob('*'):
@@ -113,15 +113,20 @@ def _compare_images(image_a_path, image_b_path, filename):
         result['size_diff'] = result['size_b'] - result['size_a']
         result['size_ratio'] = result['size_b'] / result['size_a'] if result['size_a'] > 0 else 0
         
-        # Check if files are GIFs
+        # Check if files are GIFs or AVIFs
         is_gif_a = str(image_a_path).lower().endswith('.gif')
         is_gif_b = str(image_b_path).lower().endswith('.gif')
+        is_avif_a = str(image_a_path).lower().endswith('.avif')
+        is_avif_b = str(image_b_path).lower().endswith('.avif')
         
         if is_gif_a and is_gif_b:
             # Handle GIF comparison
             result.update(_compare_gif_animations(image_a_path, image_b_path))
+        elif is_avif_a or is_avif_b:
+            # Handle AVIF comparison using ImageMagick
+            result.update(_compare_avif_images(image_a_path, image_b_path))
         else:
-            # Handle static image comparison
+            # Handle static image comparison with PIL
             with Image.open(image_a_path) as img_a, Image.open(image_b_path) as img_b:
                 # Get resolutions
                 result['resolution_a'] = f"{img_a.width}x{img_a.height}"
@@ -346,6 +351,61 @@ def _extract_gif_frames(gif_image):
         print(f"Warning: Error extracting GIF frames: {e}")
         
     return frames
+
+
+def _compare_avif_images(image_a_path, image_b_path):
+    """Compare AVIF images using ImageMagick identify."""
+    result = {}
+    
+    try:
+        import subprocess
+        
+        # Get image information using ImageMagick identify
+        for suffix, path in [('_a', image_a_path), ('_b', image_b_path)]:
+            try:
+                cmd = ['magick', 'identify', '-format', '%wx%h %m %f', str(path)]
+                identify_result = subprocess.run(cmd, capture_output=True, text=True)
+                
+                if identify_result.returncode == 0:
+                    parts = identify_result.stdout.strip().split()
+                    if len(parts) >= 2:
+                        resolution = parts[0]  # e.g., "640x480"
+                        format_name = parts[1]  # e.g., "AVIF"
+                        result[f'resolution{suffix}'] = resolution
+                        result[f'format{suffix}'] = format_name
+                    else:
+                        result[f'resolution{suffix}'] = "unknown"
+                        result[f'format{suffix}'] = "unknown"
+                else:
+                    result[f'resolution{suffix}'] = "error"
+                    result[f'format{suffix}'] = "error"
+                    
+            except Exception as e:
+                result[f'resolution{suffix}'] = "error"
+                result[f'format{suffix}'] = "error"
+        
+        # Check if resolutions match
+        res_a = result.get('resolution_a', '')
+        res_b = result.get('resolution_b', '')
+        result['resolution_match'] = (res_a == res_b and res_a != "error" and res_a != "unknown")
+        
+        # Set modes to AVIF for consistency
+        result['mode_a'] = 'AVIF'
+        result['mode_b'] = 'AVIF'
+        result['mode_match'] = True
+        
+        # AVIF quality comparison is limited without PIL - set defaults
+        result['psnr'] = None
+        result['ssim'] = None
+        result['quality_note'] = 'AVIF quality metrics require specialized tools'
+        
+    except Exception as e:
+        result['error'] = f"AVIF comparison error: {str(e)}"
+        result['resolution_a'] = "error"
+        result['resolution_b'] = "error"
+        result['resolution_match'] = False
+        
+    return result
 
 
 def _output_table(report_data, output_file=None):

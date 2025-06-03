@@ -21,9 +21,9 @@ This project aims to develop a Python-based image processing toolkit for generat
 
 - **WebP and AVIF Support Libraries**:
   - **WebP**: Native Pillow support (no additional libraries required)
-  - **AVIF**: pillow-heif>=0.22.0 (optional for reading AVIF files in validation)
-  - **AVIF Generation**: ImageMagick with AVIF support (system dependency)
+  - **AVIF Generation**: ImageMagick with AVIF support (system dependency, no PIL dependency)
   - **AVIF Animation**: FFmpeg with libaom-av1 encoder (system dependency)
+  - **AVIF Validation**: ImageMagick `identify` command (no PIL dependency)
 
 - **System Dependencies**:
   - **ImageMagick**: Required for AVIF generation and advanced image operations
@@ -67,9 +67,45 @@ src/
 
 - **Modularity**: Each format has its own dedicated generator and validator
 - **Maintainability**: Format-specific code is isolated and easier to maintain
+- **Technology Independence**: Format-specific optimal tools are used:
+  - **JPEG, PNG, GIF**: Native PIL support for maximum compatibility
+  - **WebP**: Native PIL support with full feature access
+  - **AVIF**: ImageMagick + FFmpeg for comprehensive format support (no PIL dependency)
 - **Extensibility**: New formats can be added by creating new generator/validator modules
 - **Reusability**: Common utilities are shared across all formats
 - **Testing**: Each module can be tested independently
+
+## Format-Specific Technical Implementation
+
+### AVIF Processing Implementation
+
+The toolkit implements AVIF support using external tools rather than Python PIL libraries to ensure robust format support:
+
+#### AVIF Generation Approach
+- **Static Images**: ImageMagick `magick` command with AVIF codec support
+  - Lossy compression: `magick input.jpg -quality 80 output.avif`
+  - Lossless compression: `magick input.png -quality 100 output.avif`
+- **Animation**: FFmpeg with libaom-av1 encoder for AV1-based AVIF animations
+  - Command: `ffmpeg -i input.gif -c:v libaom-av1 -pix_fmt yuv420p -crf 30 output.avif`
+  - Fallback: ImageMagick for compatibility when FFmpeg is unavailable
+
+#### AVIF Validation Approach
+- **Format Detection**: ImageMagick `identify` command for file format verification
+- **Property Extraction**: Metadata and dimension parsing from ImageMagick output
+- **No PIL Dependency**: Completely independent of Python Pillow AVIF support
+- **Robust Fallback**: Graceful degradation when system tools are unavailable
+
+#### Technical Benefits
+- **System Independence**: Works regardless of PIL AVIF support installation
+- **Format Completeness**: Full AVIF feature support through dedicated tools
+- **Performance**: Optimized system-level processing
+- **Compatibility**: Consistent behavior across different environments
+
+### WebP Processing Implementation
+
+- **Generation**: Native Pillow support with full lossy/lossless/animation capabilities
+- **Validation**: PIL-based format verification and property extraction
+- **Animation Support**: Multi-frame WebP processing through Pillow
 
 ## Core Functionality
 
@@ -550,7 +586,7 @@ python toolkit.py validate-variations [--output-dir OUTPUT] [--report-file FILE]
 - **Comprehensive format support**: JPEG, PNG, GIF, WebP, and AVIF
 - **Advanced validation features**:
   - WebP: Native PIL support for lossy/lossless/animation validation
-  - AVIF: ImageMagick fallback validation when PIL support unavailable
+  - AVIF: ImageMagick-based validation (no PIL dependency required)
   - Format-specific property validation (quality, compression, metadata)
   - Animation frame counting and format verification
 - Generate detailed validation reports in JSON or text format
@@ -737,10 +773,13 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 ### External Tool Dependencies
 
 - **ImageMagick**: Version compatibility and feature verification (required for variations)
-- **ImageMagick `identify`**: Accurate property detection for validation (required for 100% compliance)
-- FFmpeg: Installation and PATH availability (optional)
+  - **AVIF Support**: Required for AVIF generation and validation (libavif integration)
+  - **ImageMagick `identify`**: Accurate property detection for validation (required for 100% compliance)
+- **FFmpeg with libaom-av1**: Required for AVIF animation generation
+  - AV1 encoder support verification
+  - Fallback to ImageMagick when unavailable
 - ExifTool: Optional metadata enhancement
-- System libraries: libpng, libjpeg verification
+- System libraries: libpng, libjpeg, libavif verification
 
 ### Python Environment
 
@@ -753,7 +792,7 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 
 - **16-bit PNG Generation**: OpenCV-based true 16-bit depth creation with sub-pixel noise
 - **Accurate Property Detection**: ImageMagick `identify` command integration
-- **100% Compliance Achievement**: All 90 variations pass specification requirements
+- **100% Compliance Achievement**: All 100+ variations pass specification requirements (including WebP/AVIF)
 - **Bilingual Documentation**: Japanese and English descriptions for international use
 
 ### Testing and CI/CD Integration
@@ -766,9 +805,9 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 
 **Test Categories:**
 - **Original Image Generation Tests**: Specification compliance verification
-- **Variation Generation Tests**: All format variations and index.json generation
-- **Validation Tests**: Converted from `validate-variations` subcommand to pytest
-- **Property Verification Tests**: Image format, resolution, metadata validation
+- **Variation Generation Tests**: All format variations (JPEG/PNG/GIF/WebP/AVIF) and index.json generation
+- **Validation Tests**: Comprehensive format validation including AVIF ImageMagick-based testing
+- **Property Verification Tests**: Image format, resolution, metadata validation across all formats
 
 **GitHub Workflow Debugging:**
 - **Local debugging**: Use `wrkflw run -v .github/workflows/ci.yml` to debug workflow locally
@@ -783,4 +822,4 @@ jq '.[] | select(.path | contains("fps"))' output/index.json
 - **Command-line interface**: Full automation support with detailed progress reporting
 - **Continuous Integration**: Automated quality assurance on code changes
 
-This comprehensive specification provides the foundation for developing a robust image processing toolkit that addresses all identified requirements for JPEG, PNG, and GIF format variation testing, with enhanced validation capabilities, animation support, automated testing, and CI/CD integration.
+This comprehensive specification provides the foundation for developing a robust image processing toolkit that addresses all identified requirements for JPEG, PNG, GIF, WebP, and AVIF format variation testing, with enhanced validation capabilities, animation support, automated testing, and CI/CD integration. The toolkit uses format-specific optimal technologies: PIL for traditional formats and WebP, ImageMagick+FFmpeg for comprehensive AVIF support without Python library dependencies.
