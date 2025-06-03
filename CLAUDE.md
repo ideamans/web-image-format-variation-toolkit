@@ -462,6 +462,44 @@ Create an animated sequence containing:
 **Optimization + Complex Animation**
 - `gif/critical_optimized_complex.gif` - Frame optimization with complex scene changes
 
+### WebP Variations
+
+#### Lossy Compression (Quality Levels)
+
+WebP lossy compression variations match JPEG quality levels for direct comparison:
+
+- `webp/lossy/quality_20.webp` - Very low quality with high compression artifacts
+- `webp/lossy/quality_50.webp` - Medium quality, balanced compression
+- `webp/lossy/quality_80.webp` - High quality, minimal compression artifacts
+- `webp/lossy/quality_95.webp` - Very high quality, near lossless
+
+#### Lossless Compression
+
+- `webp/lossless/original.webp` - Lossless WebP compression from PNG source
+
+#### Animation
+
+- `webp/animation/original.webp` - WebP animation converted from GIF source
+
+### AVIF Variations
+
+#### Lossy Compression (Quality Levels)
+
+AVIF lossy compression variations match JPEG quality levels for direct comparison:
+
+- `avif/lossy/quality_20.avif` - Very low quality with high compression artifacts
+- `avif/lossy/quality_50.avif` - Medium quality, balanced compression
+- `avif/lossy/quality_80.avif` - High quality, minimal compression artifacts
+- `avif/lossy/quality_95.avif` - Very high quality, near lossless
+
+#### Lossless Compression
+
+- `avif/lossless/original.avif` - Lossless AVIF compression from PNG source (quality 100)
+
+#### Animation
+
+- `avif/animation/original.avif` - AVIF animation converted from GIF source using FFmpeg/ImageMagick
+
 ## Critical Factor Combinations to Avoid
 
 ### Problematic Combinations (Require Special Attention)
@@ -534,7 +572,7 @@ python toolkit.py generate-variations [--source-dir SOURCE] [--output-dir OUTPUT
 
 ```
 output/
-├── index.json              # Machine-readable metadata (103 entries)
+├── index.json              # Machine-readable metadata (111 entries)
 ├── test_original.jpg       # JPEG source image (640x480)
 ├── test_original.png       # PNG source image (480x480)
 ├── test_original.gif       # GIF source animation (200x200, 10 frames)
@@ -554,12 +592,20 @@ output/
 │   ├── fps_fast.gif
 │   ├── palette_2colors.gif
 │   └── ...
-├── webp/                   # 3 WebP variations (lossy, lossless, animation)
-│   ├── lossy/original.webp
+├── webp/                   # 7 WebP variations (4 lossy quality levels, lossless, animation)
+│   ├── lossy/
+│   │   ├── quality_20.webp
+│   │   ├── quality_50.webp
+│   │   ├── quality_80.webp
+│   │   └── quality_95.webp
 │   ├── lossless/original.webp
 │   └── animation/original.webp
-└── avif/                   # 3 AVIF variations (lossy, lossless, animation)
-    ├── lossy/original.avif
+└── avif/                   # 7 AVIF variations (4 lossy quality levels, lossless, animation)
+    ├── lossy/
+    │   ├── quality_20.avif
+    │   ├── quality_50.avif
+    │   ├── quality_80.avif
+    │   └── quality_95.avif
     ├── lossless/original.avif
     └── animation/original.avif
 ```
@@ -705,7 +751,7 @@ The `output/index.json` file contains comprehensive metadata for all generated i
 
 #### Index File Features
 
-- **Total entries**: 87 items (3 originals + 84 variations)
+- **Total entries**: 95 items (3 originals + 92 variations)
 - **Format identification**: "jpeg", "png", or "gif"
 - **Relative paths**: From output directory root
 - **Bilingual descriptions**: Japanese and English explanations

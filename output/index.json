@@ -565,9 +565,27 @@
   },
   {
     "format": "webp",
-    "path": "webp/lossy/original.webp",
-    "jp": "WebP損失圧縮（JPEG源画像から変換）",
-    "en": "WebP lossy compression (converted from JPEG source)"
+    "path": "webp/lossy/quality_20.webp",
+    "jp": "WebP損失圧縮 品質20（JPEG源画像から変換）",
+    "en": "WebP lossy compression quality 20 (converted from JPEG source)"
+  },
+  {
+    "format": "webp",
+    "path": "webp/lossy/quality_50.webp",
+    "jp": "WebP損失圧縮 品質50（JPEG源画像から変換）",
+    "en": "WebP lossy compression quality 50 (converted from JPEG source)"
+  },
+  {
+    "format": "webp",
+    "path": "webp/lossy/quality_80.webp",
+    "jp": "WebP損失圧縮 品質80（JPEG源画像から変換）",
+    "en": "WebP lossy compression quality 80 (converted from JPEG source)"
+  },
+  {
+    "format": "webp",
+    "path": "webp/lossy/quality_95.webp",
+    "jp": "WebP損失圧縮 品質95（JPEG源画像から変換）",
+    "en": "WebP lossy compression quality 95 (converted from JPEG source)"
   },
   {
     "format": "webp",
@@ -583,9 +601,27 @@
   },
   {
     "format": "avif",
-    "path": "avif/lossy/original.avif",
-    "jp": "AVIF損失圧縮（JPEG源画像から変換）",
-    "en": "AVIF lossy compression (converted from JPEG source)"
+    "path": "avif/lossy/quality_20.avif",
+    "jp": "AVIF損失圧縮 品質20（JPEG源画像から変換）",
+    "en": "AVIF lossy compression quality 20 (converted from JPEG source)"
+  },
+  {
+    "format": "avif",
+    "path": "avif/lossy/quality_50.avif",
+    "jp": "AVIF損失圧縮 品質50（JPEG源画像から変換）",
+    "en": "AVIF lossy compression quality 50 (converted from JPEG source)"
+  },
+  {
+    "format": "avif",
+    "path": "avif/lossy/quality_80.avif",
+    "jp": "AVIF損失圧縮 品質80（JPEG源画像から変換）",
+    "en": "AVIF lossy compression quality 80 (converted from JPEG source)"
+  },
+  {
+    "format": "avif",
+    "path": "avif/lossy/quality_95.avif",
+    "jp": "AVIF損失圧縮 品質95（JPEG源画像から変換）",
+    "en": "AVIF lossy compression quality 95 (converted from JPEG source)"
   },
   {
     "format": "avif",

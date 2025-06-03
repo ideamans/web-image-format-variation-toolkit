@@ -71,18 +71,21 @@ class WebpGenerator:
                 if img.mode in ('RGBA', 'LA', 'P'):
                     img = img.convert('RGB')
                 
-                # Basic lossy WebP
-                output_path = output_dir / "original.webp"
-                img.save(output_path, 'WEBP', quality=80, method=6)
+                # Generate quality variations matching JPEG quality levels
+                quality_levels = [20, 50, 80, 95]
                 
-                variations_index.append({
-                    "format": "webp",
-                    "path": "webp/lossy/original.webp",
-                    "jp": "WebP損失圧縮（JPEG源画像から変換）",
-                    "en": "WebP lossy compression (converted from JPEG source)"
-                })
-                
-                print(f"Generated lossy WebP: {output_path}")
+                for quality in quality_levels:
+                    output_path = output_dir / f"quality_{quality}.webp"
+                    img.save(output_path, 'WEBP', quality=quality, method=6)
+                    
+                    variations_index.append({
+                        "format": "webp",
+                        "path": f"webp/lossy/quality_{quality}.webp",
+                        "jp": f"WebP損失圧縮 品質{quality}（JPEG源画像から変換）",
+                        "en": f"WebP lossy compression quality {quality} (converted from JPEG source)"
+                    })
+                    
+                    print(f"Generated lossy WebP quality {quality}: {output_path}")
                 
         except Exception as e:
             print(f"Error generating lossy WebP: {e}")

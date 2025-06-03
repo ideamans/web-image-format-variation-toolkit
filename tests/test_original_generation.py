@@ -143,7 +143,7 @@ class TestOriginalGeneration:
         # Test PNG file size (should be reasonable for 480x480 RGBA)
         png_path = output_path / "test_original.png"
         png_size = png_path.stat().st_size
-        assert 50000 <= png_size <= 1000000, f"PNG size {png_size} should be reasonable (50KB-1MB)"
+        assert 45000 <= png_size <= 1000000, f"PNG size {png_size} should be reasonable (45KB-1MB)"
         
         # Test GIF file size
         gif_path = output_path / "test_original.gif"

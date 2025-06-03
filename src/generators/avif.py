@@ -139,23 +139,27 @@ Or use: brew install imagemagick (on macOS)"""
     def _generate_lossy_avif(source_file, output_dir, variations_index):
         """Generate lossy AVIF variations using ImageMagick."""
         try:
-            output_path = output_dir / "original.avif"
+            # Generate quality variations matching JPEG quality levels
+            quality_levels = [20, 50, 80, 95]
             
-            # Use ImageMagick to convert to AVIF
-            cmd = ['magick', str(source_file), '-quality', '80', str(output_path)]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            if result.returncode == 0 and output_path.exists():
-                variations_index.append({
-                    "format": "avif",
-                    "path": "avif/lossy/original.avif",
-                    "jp": "AVIF損失圧縮（JPEG源画像から変換）",
-                    "en": "AVIF lossy compression (converted from JPEG source)"
-                })
+            for quality in quality_levels:
+                output_path = output_dir / f"quality_{quality}.avif"
                 
-                print(f"Generated lossy AVIF: {output_path}")
-            else:
-                print(f"ImageMagick AVIF conversion failed: {result.stderr}")
+                # Use ImageMagick to convert to AVIF with specific quality
+                cmd = ['magick', str(source_file), '-quality', str(quality), str(output_path)]
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                
+                if result.returncode == 0 and output_path.exists():
+                    variations_index.append({
+                        "format": "avif",
+                        "path": f"avif/lossy/quality_{quality}.avif",
+                        "jp": f"AVIF損失圧縮 品質{quality}（JPEG源画像から変換）",
+                        "en": f"AVIF lossy compression quality {quality} (converted from JPEG source)"
+                    })
+                    
+                    print(f"Generated lossy AVIF quality {quality}: {output_path}")
+                else:
+                    print(f"ImageMagick AVIF conversion failed for quality {quality}: {result.stderr}")
                 
         except Exception as e:
             print(f"Error generating lossy AVIF: {e}")
